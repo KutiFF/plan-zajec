@@ -549,9 +549,9 @@
             padding:0 clamp(16px,2.4vw,48px);
         }
         .app-header:has(#settingsPanel:not(.hidden)) { z-index:150; }
-        .brand-mark { padding:0; background:var(--ui-primary-container); border-radius:16px 16px 7px 16px; transform:rotate(-7deg); overflow:hidden; }
-        .brand-mark img { display:block; width:100%; height:100%; object-fit:contain; transform:rotate(7deg) scale(1.23); }
-        .brand-mark span { background:var(--ui-primary); transform:rotate(7deg); }
+        .brand-mark { display:block; padding:0; background:transparent; border-radius:0; transform:none; overflow:visible; }
+        .brand-mark img { display:block; width:100%; height:100%; object-fit:contain; transform:none; }
+        .brand-mark span { background:var(--ui-primary); transform:none; }
         .brand-copy strong { font-size:18px; font-weight:800; letter-spacing:-.04em; }
         .brand-copy small { letter-spacing:.02em; }
         .theme-control { display:none; }
