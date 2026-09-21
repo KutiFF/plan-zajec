@@ -715,6 +715,23 @@
         #omuModal option { color:var(--ui-ink)!important; background:var(--ui-surface)!important; }
         #entryModal #subjectPreview,
         #entryModal #teacherPreview { color:var(--ui-ink)!important; opacity:1!important; }
+        .academic-year-picker {
+            display:grid; grid-template-columns:40px minmax(0,1fr) 40px; align-items:stretch;
+            gap:6px; margin-top:4px;
+        }
+        .academic-year-picker button {
+            min-height:40px; border:1px solid var(--ui-border); border-radius:var(--ui-radius-sm);
+            background:var(--ui-container); color:var(--ui-ink); font-size:22px; line-height:1;
+            cursor:pointer;
+        }
+        .academic-year-picker button:hover { background:var(--ui-high); }
+        .academic-year-picker button:active { background:var(--ui-primary-container); transform:scale(.97); }
+        .academic-year-picker output {
+            display:flex; align-items:center; justify-content:center; min-width:0; min-height:40px;
+            padding:0 10px; box-sizing:border-box; border:1px solid var(--ui-outline);
+            border-radius:var(--ui-radius-sm); background:var(--ui-container); color:var(--ui-ink);
+            font-variant-numeric:tabular-nums; font-weight:650; letter-spacing:.02em;
+        }
         :root[data-theme="dark"] #entryModal input::placeholder,
         :root[data-theme="dark"] #entryModal textarea::placeholder,
         :root[data-theme="dark"] #manualModal input::placeholder,
@@ -1142,7 +1159,14 @@
                 <label>Tryb <select id="profileAttendance" class="w-full border rounded p-2 mt-1"><option value="stacjonarne">Stacjonarne</option><option value="niestacjonarne">Niestacjonarne</option></select></label>
                 <label>Semestr <select id="profileSemester" class="w-full border rounded p-2 mt-1"><option value="zimowy">Zimowy</option><option value="letni">Letni</option></select></label>
                 <label>Numer semestru <select id="profileSemesterNumber" class="w-full border rounded p-2 mt-1"><option value="">Bez numeru</option><option value="I">I</option><option value="II">II</option><option value="III">III</option><option value="IV">IV</option><option value="V">V</option><option value="VI">VI</option><option value="VII">VII</option><option value="VIII">VIII</option><option value="IX">IX</option><option value="X">X</option></select></label>
-                <label class="col-span-2">Rok akademicki <input id="profileAcademicYear" class="w-full border rounded p-2 mt-1" placeholder="np. 2025/2026"></label>
+                <label class="col-span-2">Rok akademicki
+                    <input id="profileAcademicYear" type="hidden" value="">
+                    <span class="academic-year-picker" role="group" aria-label="Wybór roku akademickiego">
+                        <button type="button" onclick="changeAcademicYear(-1)" title="Poprzedni rok akademicki" aria-label="Poprzedni rok akademicki">←</button>
+                        <output id="profileAcademicYearDisplay" aria-live="polite"></output>
+                        <button type="button" onclick="changeAcademicYear(1)" title="Następny rok akademicki" aria-label="Następny rok akademicki">→</button>
+                    </span>
+                </label>
             </div>
             <button class="ui-button full-width welcome-import" onclick="chooseImport()">Importuj zapisany plan (.json)</button>
             <div class="flex justify-end gap-2 mt-5"><button onclick="skipWelcome()" class="border rounded px-3 py-2">Pomiń</button><button onclick="saveWelcome()" class="bg-blue-600 text-white rounded px-3 py-2">Zapisz nagłówki</button></div>
@@ -3472,10 +3496,28 @@
             for (const [id,key,defaultValue] of [['profileYear','year','I'],['profileDegree','degree','I'],['profileAttendance','attendance','stacjonarne'],['profileSemester','semester','zimowy']]) document.getElementById(id).value = profile[key] || defaultValue;
             document.getElementById('profileSemesterNumber').value = profile.semesterNumber || '';
             const year = new Date().getFullYear();
-            document.getElementById('profileAcademicYear').value = profile.academicYear || (editing ? (document.querySelector('#header-right [contenteditable]')?.textContent.match(/\d{4}\/\d{4}/)||[])[0] : '') || `${year}/${year+1}`;
+            setAcademicYearField(profile.academicYear || (editing ? (document.querySelector('#header-right [contenteditable]')?.textContent.match(/\d{4}\/\d{4}/)||[])[0] : '') || `${year}/${year+1}`);
             document.getElementById('welcomeTitle').textContent = editing ? 'Zmień nagłówki studiów' : 'Witaj! Przygotuj nagłówek planu';
             document.getElementById('welcomeModal').classList.replace('hidden','flex');
             document.getElementById('profileCourse').focus();
+        }
+        function normalizeAcademicYear(value) {
+            const match = String(value || '').trim().match(/^(\d{4})\s*\/\s*(\d{4})$/);
+            if (!match) return null;
+            const start = Number(match[1]), end = Number(match[2]);
+            return end === start + 1 ? { start, end } : null;
+        }
+        function setAcademicYearField(value) {
+            const fallbackStart = new Date().getFullYear();
+            const parsed = normalizeAcademicYear(value) || { start:fallbackStart, end:fallbackStart+1 };
+            const normalized = `${parsed.start}/${parsed.end}`;
+            document.getElementById('profileAcademicYear').value = normalized;
+            document.getElementById('profileAcademicYearDisplay').textContent = normalized;
+        }
+        function changeAcademicYear(delta) {
+            const current = normalizeAcademicYear(document.getElementById('profileAcademicYear').value);
+            const start = (current ? current.start : new Date().getFullYear()) + (delta < 0 ? -1 : 1);
+            setAcademicYearField(`${start}/${start+1}`);
         }
         function skipWelcome() {
             localStorage.setItem(PROFILE_KEY, JSON.stringify({ ...readProfile(), done:true }));
