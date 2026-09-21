@@ -1,7 +1,7 @@
 // The 0.9.2.1 shell contains its complete CSS, JS, icons and fonts.
 // The previous release remains available offline as an independent fallback.
 const SHELL_CACHE = 'plan-zajec-shell-v0921';
-const SHELL_URL = new URL('./Plan_zajec_v0.9.2.1.html', self.registration.scope).href;
+const SHELL_URL = new URL('./index.html', self.registration.scope).href;
 const PREVIOUS_CACHE = 'plan-zajec-shell-v09';
 const PREVIOUS_URL = new URL('./Plan_zajec_v0.9.html', self.registration.scope).href;
 
