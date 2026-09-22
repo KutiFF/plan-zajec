@@ -1,0 +1,12 @@
+{
+  "name": "twoj-plan-zajec",
+  "private": true,
+  "description": "Lokalny i działający offline kreator planu zajęć.",
+  "scripts": {
+    "format": "prettier --write index.html service-worker.js README.md assets/css/*.css assets/js/*.js",
+    "format:check": "prettier --check index.html service-worker.js README.md assets/css/*.css assets/js/*.js"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2"
+  }
+}
