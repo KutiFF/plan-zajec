@@ -1066,7 +1066,7 @@
                     <div id="optionsDropdown" class="hidden absolute">
                         <button onclick="openMobileDocumentPreview()" class="mobile-export-preview">Podgląd A4 i zapis PDF</button>
                         <button onclick="exportToPDF()" class="pdf-export-action">Drukuj / zapisz PDF</button>
-                        <button onclick="exportJSON()">Kopia wszystkich planów (.json)</button>
+                        <button onclick="openBackupExport()">Pobierz kopię planu (.json)</button>
                     </div>
                 </div>
                 <div class="relative" id="settingsAnchor">
@@ -1421,6 +1421,15 @@
             <label>Skopiuj do <select id="bankCopyTarget" class="ui-button"><option value="both">Obu tygodni</option><option value="even">Tygodnia parzystego</option><option value="odd">Tygodnia nieparzystego</option></select></label>
             <div class="dialog-actions"><button class="ui-button" onclick="closeBankCopy()">Anuluj</button><button class="ui-button primary-button" onclick="copyWeeklyBank()">Skopiuj zajęcia</button></div>
         </div>
+    </div>
+    <div id="backupModal" class="dialog-backdrop fixed inset-0 hidden items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="backupTitle" onclick="if(event.target===this) closeBackupExport()">
+        <form class="dialog-panel" onsubmit="event.preventDefault();exportJSON()">
+            <h2 id="backupTitle" class="text-lg font-bold">Pobierz kopię planu</h2>
+            <p class="setting-note">Wybierz, które warianty planu mają znaleźć się w pliku JSON.</p>
+            <label>Zakres kopii<select id="backupScope"><option value="current">Aktualnie otwarty plan</option><option value="common">Plan tygodniowy</option><option value="even">Tydzień parzysty</option><option value="odd">Tydzień nieparzysty</option><option value="all">Wszystkie warianty planu</option></select></label>
+            <label class="setting-check"><input id="backupIncludeSettings" type="checkbox" checked> Dołącz ustawienia aplikacji i dane nagłówków</label>
+            <div class="dialog-actions"><button type="button" class="ui-button" onclick="closeBackupExport()">Anuluj</button><button type="submit" class="ui-button primary-button">Pobierz kopię</button></div>
+        </form>
     </div>
     <div id="omuModal" class="dialog-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="omuTitle">
         <div class="dialog-panel">
@@ -2588,7 +2597,7 @@
 
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                for (const [id,close] of [['bankCopyModal',closeBankCopy],['omuModal',closeOmu],['helpModal',closeHelp],['entryModal',closeEntryModal],['manualModal',closeManualModal],['resetModal',closeReset],['welcomeModal',skipWelcome]]) {
+                for (const [id,close] of [['backupModal',closeBackupExport],['bankCopyModal',closeBankCopy],['omuModal',closeOmu],['helpModal',closeHelp],['entryModal',closeEntryModal],['manualModal',closeManualModal],['resetModal',closeReset],['welcomeModal',skipWelcome]]) {
                     if (!document.getElementById(id).classList.contains('hidden')) { e.preventDefault(); close(); return; }
                 }
                 closeAllCellMenus();
@@ -2600,10 +2609,10 @@
             if (e.key === 'F1') { e.preventDefault(); openHelp(); return; }
             if (e.ctrlKey && e.key === 'Enter' && !document.getElementById('omuModal').classList.contains('hidden')) { e.preventDefault(); saveOmuEntry(); return; }
             if (e.ctrlKey && e.key === 'Enter' && !document.getElementById('entryModal').classList.contains('hidden')) { e.preventDefault(); submitEntryModal(); return; }
-            const inDialog = ['entryModal','manualModal','welcomeModal','resetModal','helpModal','customModal','bankCopyModal','omuModal'].some(id => !document.getElementById(id).classList.contains('hidden'));
+            const inDialog = ['entryModal','manualModal','welcomeModal','resetModal','helpModal','customModal','backupModal','bankCopyModal','omuModal'].some(id => !document.getElementById(id).classList.contains('hidden'));
             if (inDialog) return;
             if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'a' && mode === 'edit') { e.preventDefault(); openQuickEntry(); return; }
-            if (e.ctrlKey && e.key.toLowerCase() === 's') { e.preventDefault(); exportJSON(); return; }
+            if (e.ctrlKey && e.key.toLowerCase() === 's') { e.preventDefault(); openBackupExport(); return; }
             if (e.ctrlKey && e.key.toLowerCase() === 'p') { e.preventDefault(); exportToPDF(); return; }
             const typing = e.target.closest('input, textarea, select') || e.target.isContentEditable;
             if (typing || mode === 'view') return;
@@ -2641,22 +2650,43 @@
             }, 500);
         });
 
-        // Eksport obu tygodni; import zachowuje też starszy format jednostronicowy.
-        function downloadJSON(content) {
+        // Kopia może zawierać jeden wariant planu albo wszystkie zapisane warianty.
+        function downloadJSON(content, scope = 'plan') {
             const url = URL.createObjectURL(new Blob([JSON.stringify(content, null, 2)], { type: 'application/json' }));
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'plan_zajec_0.9.2.1.json';
+            a.download = 'plan_zajec_' + scope + '.json';
             document.body.appendChild(a);
             a.click();
             a.remove();
             setTimeout(() => URL.revokeObjectURL(url), 3000);
         }
-        function exportJSON() {
+        function openBackupExport() {
             saveState(false);
-            downloadJSON({ version: '0.9', selected: currentWeek, weekMode, parityUsed, weeks: weekStates, settings, lastDividedWeek, profile: readProfile() });
+            const currentLabel=currentWeek==='even'?'tydzień parzysty':currentWeek==='odd'?'tydzień nieparzysty':'plan tygodniowy';
+            document.querySelector('#backupScope option[value="current"]').textContent='Aktualnie otwarty — '+currentLabel;
+            document.getElementById('backupScope').value='current';
+            document.getElementById('backupIncludeSettings').checked=true;
             document.getElementById('optionsDropdown').classList.add('hidden');
             document.querySelector('.export-button').setAttribute('aria-expanded','false');
+            document.getElementById('backupModal').classList.replace('hidden','flex');
+            document.getElementById('backupScope').focus();
+        }
+        function closeBackupExport() { document.getElementById('backupModal').classList.replace('flex','hidden'); }
+        function exportJSON() {
+            saveState(false);
+            const requested=document.getElementById('backupScope').value;
+            const scope=requested==='current'?currentWeek:requested;
+            const includeSettings=document.getElementById('backupIncludeSettings').checked;
+            const content=scope==='all'
+                ? { version:'1.1', exportScope:'all', selected:currentWeek, weekMode, parityUsed, weeks:structuredClone(weekStates), lastDividedWeek }
+                : { version:'1.1', exportScope:scope, state:structuredClone(weekStates[scope]) };
+            if (includeSettings) {
+                content.settings=structuredClone(settings);
+                content.profile=readProfile();
+            }
+            downloadJSON(content,scope==='all'?'wszystkie':scope);
+            closeBackupExport();
         }
         function validateState(state) {
             if (!state || typeof state.table !== 'string' || typeof state.thead !== 'string' || state.table.length > 1000000) throw new Error('Nieprawidłowy plan');
@@ -2688,14 +2718,29 @@
             reader.onload = () => {
                 try {
                     const data = JSON.parse(reader.result);
-                    const weeks = data.weeks
-                        ? { even: validateState(data.weeks.even), odd: validateState(data.weeks.odd), common: data.weeks.common ? validateState(data.weeks.common) : validateState(structuredClone(data.weeks.even)) }
-                        : { common: validateState(data), even: validateState(structuredClone(data)), odd: validateState(structuredClone(data)) };
+                    let weeks, importedWeekMode, importedCurrentWeek, importedParityUsed;
+                    if (data.weeks) {
+                        weeks={ even:validateState(data.weeks.even), odd:validateState(data.weeks.odd), common:data.weeks.common?validateState(data.weeks.common):validateState(structuredClone(data.weeks.even)) };
+                        importedWeekMode=typeof data.weekMode==='boolean'?data.weekMode:true;
+                        importedCurrentWeek=importedWeekMode?(data.selected==='odd'?'odd':'even'):'common';
+                        importedParityUsed=typeof data.parityUsed==='boolean'?data.parityUsed:true;
+                    } else if (data.state && ['common','even','odd'].includes(data.exportScope)) {
+                        const scope=data.exportScope, state=validateState(data.state);
+                        weeks={ common:blankStateFrom(state,'common'), even:blankStateFrom(state,'even'), odd:blankStateFrom(state,'odd') };
+                        weeks[scope]=state;
+                        importedWeekMode=scope!=='common';
+                        importedCurrentWeek=scope;
+                        importedParityUsed=scope!=='common';
+                    } else {
+                        const state=validateState(data);
+                        weeks={ common:state, even:validateState(structuredClone(state)), odd:validateState(structuredClone(state)) };
+                        importedWeekMode=false; importedCurrentWeek='common'; importedParityUsed=false;
+                    }
                     weekStates = weeks;
-                    weekMode = typeof data.weekMode === 'boolean' ? data.weekMode : !!data.weeks;
-                    parityUsed = typeof data.parityUsed === 'boolean' ? data.parityUsed : !!data.weeks;
-                    currentWeek = weekMode ? (data.selected === 'odd' ? 'odd' : 'even') : 'common';
-                    lastDividedWeek = data.lastDividedWeek === 'odd' ? 'odd' : 'even';
+                    weekMode=importedWeekMode;
+                    parityUsed=importedParityUsed;
+                    currentWeek=importedCurrentWeek;
+                    lastDividedWeek = data.lastDividedWeek === 'odd' || (!data.lastDividedWeek && currentWeek==='odd') ? 'odd' : 'even';
                     if (data.settings) settings = Object.assign({}, DEFAULT_SETTINGS, data.settings);
                     if (data.profile && typeof data.profile === 'object' && !Array.isArray(data.profile)) {
                         const safe = {};
