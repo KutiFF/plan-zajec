@@ -1279,7 +1279,7 @@
     </nav>
 
     <div id="saveStatus" class="no-print" role="status" aria-live="polite"></div>
-    <footer id="versionFooter" class="text-xs text-gray-500 mt-3 no-print">Twój plan zajęć · wersja 1.0 · 🤖 Vibe coding</footer>
+    <footer id="versionFooter" class="text-xs text-gray-500 mt-3 no-print">Twój plan zajęć · wersja 1.1 · 🤖 Vibe coding</footer>
 
     <!-- Modal: Wstaw zajęcia (spójny szablon) -->
     <div id="entryModal" class="fixed inset-0 hidden items-center justify-center z-[110]" style="background: rgba(0,0,0,0.5);" onclick="if(event.target===this) closeEntryModal()">
@@ -3402,6 +3402,7 @@
             localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
             applySettings();
             fillSettingsForm();
+            syncResponsiveClass();
             saveState(false);
         }
 
