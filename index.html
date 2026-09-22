@@ -844,6 +844,7 @@
         }
         .mobile-overview { display:none; }
         #optionsDropdown .mobile-export-preview { display:none; }
+        #optionsDropdown .pdf-export-action { display:block; }
         @media(max-width:720px) {
             body { min-height:100dvh; }
             .app-header { gap:6px; padding:0 9px; }
@@ -995,6 +996,10 @@
         html.mobile-layout .mobile-overview-note { margin:2px 0 12px; color:var(--ui-muted); }
         html.mobile-layout .mobile-overview-list { display:grid; gap:9px; min-width:0; }
         html.mobile-layout .mobile-export-host .export-button { min-height:44px; padding:8px 12px; background:var(--ui-primary); color:var(--ui-on-primary); border-color:transparent; }
+        html.mobile-layout body:not(.mobile-previewing) #optionsDropdown .mobile-export-preview { display:block; }
+        html.mobile-layout body:not(.mobile-previewing) #optionsDropdown .pdf-export-action { display:none; }
+        html.mobile-layout body.mobile-previewing #optionsDropdown .mobile-export-preview { display:none; }
+        html.mobile-layout body.mobile-previewing #optionsDropdown .pdf-export-action { display:block; }
         html.mobile-layout .mobile-lesson, html.mobile-layout .mobile-empty, html.mobile-layout .mobile-week-day { min-width:0; border-radius:20px; background:var(--ui-surface); border:1px solid var(--ui-border); }
         html.mobile-layout .mobile-lesson { display:grid; grid-template-columns:96px minmax(0,1fr); gap:12px; padding:14px; }
         html.mobile-layout .mobile-lesson.current { background:var(--ui-primary-container); border-color:var(--ui-primary); }
@@ -1059,10 +1064,9 @@
                 <button id="modeButton" onclick="toggleMode()" class="ui-button">Podgląd</button>
                 <div class="relative"><button onclick="toggleOptionsDropdown(this)" class="ui-button export-button">Eksport ▾</button>
                     <div id="optionsDropdown" class="hidden absolute">
-                        <button onclick="openMobileDocumentPreview()" class="mobile-export-preview">Podgląd dokumentu A4</button>
-                        <button onclick="exportToPDF()">Drukuj / zapisz PDF</button>
+                        <button onclick="openMobileDocumentPreview()" class="mobile-export-preview">Podgląd A4 i zapis PDF</button>
+                        <button onclick="exportToPDF()" class="pdf-export-action">Drukuj / zapisz PDF</button>
                         <button onclick="exportJSON()">Kopia wszystkich planów (.json)</button>
-                        <button onclick="chooseImport();document.getElementById('optionsDropdown').classList.add('hidden');document.querySelector('.export-button').setAttribute('aria-expanded','false')">Importuj plan (.json)</button>
                     </div>
                 </div>
                 <div class="relative" id="settingsAnchor">
@@ -1392,7 +1396,7 @@
             <details><summary>Jak działają tygodnie parzyste i nieparzyste?</summary><p class="setting-note">Po włączeniu podziału plan tygodniowy oraz oba warianty tygodnia mają osobne zapisy. W widoku użyj strzałek, kalendarza albo przycisku Dzisiaj. W Ustawieniach podaj datę znanego tygodnia i jego parzystość, aby aplikacja wskazywała właściwy wariant automatycznie.</p></details>
             <details><summary>Nagłówki, A4 i wydruk</summary><p class="setting-note">Nagłówki studiów zmienisz w Ustawieniach. Dopasowanie do A4 reaguje na zmiany planu, a puste dni mogą być zwężane. Motyw aplikacji nie zmienia samego dokumentu: wydruk i PDF pozostają niezależnym, czytelnym planem A4.</p></details>
             <details><summary>Jak dodać i sprawdzić OMU?</summary><p class="setting-note">Otwórz OMU, wybierz blok, dzień i godziny, a następnie ustaw powtarzanie co tydzień albo konkretne daty. W podglądzie domyślnie widzisz OMU właściwe dla wybranego tygodnia; w Ustawieniach możesz włączyć stałe pokazywanie wszystkich OMU.</p></details>
-            <details><summary>Offline, kopie i bezpieczeństwo danych</summary><p class="setting-note">Dane planu i ustawienia są lokalne dla tej przeglądarki. Aplikacja działa samodzielnie bez internetu, a po pełnym załadowaniu przez HTTPS także offline dzięki pamięci aplikacji. Kopię wszystkich planów pobierzesz z Eksportu jako JSON i później ją zaimportujesz.</p></details>
+            <details><summary>Offline, kopie i bezpieczeństwo danych</summary><p class="setting-note">Dane planu i ustawienia są lokalne dla tej przeglądarki. Aplikacja działa samodzielnie bez internetu, a po pełnym załadowaniu przez HTTPS także offline dzięki pamięci aplikacji. Kopię planu pobierzesz z Eksportu jako JSON, a zapisany plik wczytasz przyciskiem Import planu w Edycji.</p></details>
             <table class="w-full text-sm border-collapse shortcut-table" aria-label="Skróty klawiszowe"><tbody>
                 <tr><td>Strzałki</td><td>Wybierz sąsiednią komórkę (po kliknięciu komórki)</td></tr>
                 <tr><td>Enter</td><td>Dodaj lub edytuj zajęcia w wybranej komórce</td></tr>
@@ -2714,6 +2718,10 @@
             document.getElementById('optionsDropdown').classList.add('hidden');
         }
         function exportToPDF() {
+            if (usesMobileLayout() && !document.body.classList.contains('mobile-previewing')) {
+                openMobileDocumentPreview();
+                return;
+            }
             saveState(false);
             compactColumns(); updateHeaderZoneHeight();
             if (settings.autoFit) autoFitToPage();
