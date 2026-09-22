@@ -941,6 +941,87 @@
             .mobile-overview-nav button:nth-of-type(2) { grid-column:3; grid-row:2; }
             .mobile-overview-nav button:last-child { grid-column:2; grid-row:2; }
         }
+        /* Wybrany układ mobilny działa również na tabletach, niezależnie od media query. */
+        html.mobile-layout .preview-top-scroll { display:none!important; }
+        html.mobile-layout .app-header { gap:8px; }
+        html.mobile-layout .app-header-actions, html.mobile-layout .global-actions { gap:5px; }
+        html.mobile-layout .github-link,
+        html.mobile-layout .global-actions > button.ui-button,
+        html.mobile-layout .global-actions > #settingsAnchor > button.ui-button { width:44px; min-width:44px; height:44px; min-height:44px; }
+        html.mobile-layout #appWorkspace { min-height:0; padding:10px 10px calc(82px + env(safe-area-inset-bottom)); }
+        html.mobile-layout #toolbar .command-row > .toolbar-group:first-child { display:grid; grid-template-columns:minmax(0,1fr) 44px 44px; gap:8px; min-width:0; }
+        html.mobile-layout #toolbar .command-row > .toolbar-group:first-child > button:first-child { grid-column:1/-1; }
+        html.mobile-layout #toolbar .command-row > .toolbar-group:first-child > button { min-width:0; min-height:44px; white-space:normal; }
+        html.mobile-layout #toolbar .command-row > .toolbar-group:first-child > .toolbar-group { display:contents; }
+        html.mobile-layout #toolbar .toolbar-secondary { flex-wrap:wrap; gap:8px; }
+        html.mobile-layout #toolbar .toolbar-secondary > label:first-child { flex:1 1 150px; min-height:44px; display:flex; align-items:center; }
+        html.mobile-layout #toolbar .toolbar-secondary > label.toolbar-right { flex:1 1 100%; min-height:44px; margin:0; }
+        html.mobile-layout #toolbar .remote-days { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:5px; }
+        html.mobile-layout #toolbar .remote-days > span { grid-column:1/-1; width:auto; }
+        html.mobile-layout #toolbar .remote-days label { min-width:0; min-height:48px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; border-radius:12px; background:var(--ui-container); font-size:12px; }
+        html.mobile-layout .mobile-editor { display:block; }
+        html.mobile-layout body.view-mode .mobile-editor { display:none; }
+        html.mobile-layout .mobile-editor-head, html.mobile-layout .mobile-overview-head { display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:0; }
+        html.mobile-layout .mobile-day-tabs { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:5px; padding:6px 0 12px; }
+        html.mobile-layout .mobile-day-tabs button { min-width:0; min-height:44px; padding:5px 1px; border:1px solid var(--ui-border); border-radius:var(--ui-radius-sm); color:var(--ui-ink); background:var(--ui-surface); font-weight:650; }
+        html.mobile-layout .mobile-day-tabs button[aria-selected="true"] { background:var(--ui-primary-container); border-color:var(--ui-primary); border-radius:18px 18px 8px 18px; }
+        html.mobile-layout .mobile-day-entries { display:grid; gap:6px; }
+        html.mobile-layout .mobile-entry { display:grid; grid-template-columns:88px minmax(0,1fr); gap:10px; align-items:center; min-width:0; min-height:56px; width:100%; box-sizing:border-box; padding:10px 12px; text-align:left; color:var(--ui-ink); border:0; border-radius:18px; background:var(--ui-surface); box-shadow:0 1px 0 var(--ui-border); }
+        html.mobile-layout .mobile-entry:not(.empty) { background:var(--ui-secondary-container); }
+        html.mobile-layout .mobile-entry .entry-summary { min-width:0; white-space:normal; overflow-wrap:anywhere; line-height:1.3; }
+        html.mobile-layout .mobile-entry .entry-summary small { display:block; color:var(--ui-muted); font-weight:400; margin-top:3px; overflow-wrap:anywhere; }
+        html.mobile-layout .mobile-bottom-nav { position:fixed; z-index:80; left:0; right:0; bottom:0; display:flex; justify-content:center; gap:12px; padding:7px 8px max(8px,env(safe-area-inset-bottom)); background:var(--ui-surface); border-top:1px solid var(--ui-border); box-shadow:0 -5px 20px rgba(0,0,0,.06); }
+        html.mobile-layout .mobile-bottom-nav button { flex:1; max-width:240px; min-height:54px; border:0; border-radius:18px 18px 8px 18px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; color:var(--ui-muted); background:transparent; font-size:12px; font-weight:650; }
+        html.mobile-layout body:not(.view-mode) #mobileEditTab,
+        html.mobile-layout body.view-mode #mobileViewTab { background:var(--ui-primary-container); color:var(--ui-primary); }
+        html.mobile-layout body.view-mode:not(.mobile-previewing) #toolbar,
+        html.mobile-layout body.view-mode:not(.mobile-previewing) .document-top,
+        html.mobile-layout body.view-mode:not(.mobile-previewing) .preview-shell,
+        html.mobile-layout body.view-mode:not(.mobile-previewing) #previewFeedback { display:none!important; }
+        html.mobile-layout body.view-mode:not(.mobile-previewing) .mobile-overview { display:block; min-width:0; padding:6px 2px 0; }
+        html.mobile-layout body.mobile-previewing .mobile-editor,
+        html.mobile-layout body.mobile-previewing .mobile-overview { display:none!important; }
+        html.mobile-layout body.mobile-previewing .preview-shell { display:block; }
+        html.mobile-layout body.mobile-previewing .document-top { display:flex; }
+        html.mobile-layout body.mobile-previewing .preview-return { display:block; margin:0 0 10px; }
+        html.mobile-layout .mobile-overview-head h2 { min-width:0; margin:0; font-size:18px; overflow-wrap:anywhere; }
+        html.mobile-layout .mobile-overview-tabs { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; margin:12px 0; border-radius:18px; background:var(--ui-container); }
+        html.mobile-layout .mobile-overview-tabs button { min-height:44px; border:0; border-radius:14px; color:var(--ui-muted); background:transparent; font-weight:750; }
+        html.mobile-layout .mobile-overview-tabs button[aria-selected="true"] { background:var(--ui-primary-container); color:var(--ui-ink); }
+        html.mobile-layout .mobile-overview-nav { display:grid; grid-template-columns:44px minmax(0,1fr) 44px auto; gap:6px; margin:10px 0 14px; align-items:center; }
+        html.mobile-layout .mobile-overview-nav button, html.mobile-layout .mobile-overview-nav input { min-width:0; min-height:44px; box-sizing:border-box; border:1px solid var(--ui-border); border-radius:14px; padding:4px 8px; color:var(--ui-ink); background:var(--ui-surface); }
+        html.mobile-layout .mobile-overview-nav input { width:100%; }
+        html.mobile-layout .mobile-overview-date { margin:14px 0 2px; font-size:22px; font-weight:800; overflow-wrap:anywhere; }
+        html.mobile-layout .mobile-overview-note { margin:2px 0 12px; color:var(--ui-muted); }
+        html.mobile-layout .mobile-overview-list { display:grid; gap:9px; min-width:0; }
+        html.mobile-layout .mobile-export-host .export-button { min-height:44px; padding:8px 12px; background:var(--ui-primary); color:var(--ui-on-primary); border-color:transparent; }
+        html.mobile-layout .mobile-lesson, html.mobile-layout .mobile-empty, html.mobile-layout .mobile-week-day { min-width:0; border-radius:20px; background:var(--ui-surface); border:1px solid var(--ui-border); }
+        html.mobile-layout .mobile-lesson { display:grid; grid-template-columns:96px minmax(0,1fr); gap:12px; padding:14px; }
+        html.mobile-layout .mobile-lesson.current { background:var(--ui-primary-container); border-color:var(--ui-primary); }
+        html.mobile-layout .mobile-lesson.next { background:var(--ui-secondary-container); }
+        html.mobile-layout .mobile-lesson.past { opacity:.72; }
+        html.mobile-layout .mobile-lesson time { min-width:0; color:var(--ui-secondary); white-space:nowrap; font-weight:750; font-variant-numeric:tabular-nums; }
+        html.mobile-layout .mobile-lesson-body { min-width:0; overflow-wrap:anywhere; }
+        html.mobile-layout .mobile-lesson-body strong { display:block; line-height:1.3; font-size:15px; }
+        html.mobile-layout .mobile-lesson-body p { margin:3px 0 0; color:var(--ui-muted); }
+        html.mobile-layout .mobile-lesson-body .mobile-lesson-kind { color:var(--ui-primary); font-size:12px; font-weight:750; }
+        html.mobile-layout .mobile-empty { padding:22px 17px; color:var(--ui-muted); }
+        html.mobile-layout .mobile-week-day summary { cursor:pointer; list-style:none; min-height:56px; padding:12px 15px; display:flex; align-items:center; gap:10px; }
+        html.mobile-layout .mobile-week-day summary strong { flex:1 1 auto; min-width:0; }
+        html.mobile-layout .mobile-week-day summary span { flex:0 1 46%; min-width:0; overflow-wrap:anywhere; color:var(--ui-muted); text-align:right; font-size:12px; }
+        html.mobile-layout .mobile-week-day summary::after { content:'⌄'; color:var(--ui-muted); font-size:19px; }
+        html.mobile-layout .mobile-week-day[open] summary::after { transform:rotate(180deg); }
+        html.mobile-layout .mobile-week-day .mobile-overview-list { padding:0 10px 10px; }
+        html.mobile-layout .mobile-week-day .mobile-lesson { padding:10px; }
+        html.mobile-layout .mobile-week-day.today { border-color:var(--ui-primary); }
+        html.mobile-layout #helpModal .shortcut-table { display:none; }
+        html.mobile-layout #helpModal .dialog-panel { max-height:min(85dvh,720px); overflow-y:auto; width:calc(100vw - 20px); box-sizing:border-box; padding:18px; }
+        html.mobile-layout .settings-backdrop:not(.hidden) { display:block; position:fixed; inset:0; z-index:140; background:rgba(0,0,0,.55); backdrop-filter:blur(5px); }
+        html.mobile-layout #settingsPanel { position:fixed; inset:50% auto auto 50%!important; width:min(560px,calc(100vw - 20px)); max-height:min(86dvh,760px); box-sizing:border-box; overflow:auto; padding:20px; border-radius:24px; transform:translate(-50%,-50%); z-index:151; font-size:15px; }
+        html.mobile-layout #settingsPanel .settings-close { display:grid; place-items:center; width:44px; height:44px; padding:0; border:0; border-radius:14px; background:var(--ui-container); color:var(--ui-ink); font-size:22px; }
+        html.mobile-layout #settingsPanel .setting-check { min-height:48px; margin:6px 0; padding:8px 10px; box-sizing:border-box; border-radius:14px; background:var(--ui-container); }
+        html.mobile-layout #settingsPanel input:not([type=checkbox]):not([type=color]), html.mobile-layout #settingsPanel select, html.mobile-layout #settingsPanel .ui-button { min-height:46px; font-size:16px; border-radius:12px; }
+        html.mobile-layout #versionFooter { padding-bottom:calc(76px + env(safe-area-inset-bottom)); }
         @media print {
             #previewFeedback,.global-actions,.document-actions,.mobile-overview { display:none!important; }
             body.view-mode:not(.mobile-previewing) .preview-shell,
@@ -1000,6 +1081,8 @@
                         <hr>
                         <label>Tryb po otwarciu<select id="setDefaultMode" onchange="updateSetting('defaultMode',this.value)"><option value="auto">Podgląd zapisanego planu</option><option value="edit">Zawsze edycja</option></select></label>
                         <div class="setting-note">Pusty plan otwiera się w edycji.</div>
+                        <label>Układ na tablecie<select id="setTabletLayout" onchange="updateSetting('tabletLayout',this.value)"><option value="mobile">Mobilny — Edytuj / Podgląd</option><option value="desktop">Komputerowy — dokument i narzędzia</option></select></label>
+                        <div class="setting-note">Dotyczy ekranów od 721 do 1240 px. Telefon zawsze używa układu mobilnego.</div>
                         <details><summary>Automatyczny tydzień</summary>
                             <label>Data znanego tygodnia<input id="setParityDate" type="date" onchange="updateParityReference()"></label>
                             <label>To tydzień<select id="setParityKind" onchange="updateParityReference()"><option value="even">Parzysty</option><option value="odd">Nieparzysty</option></select></label>
@@ -1414,9 +1497,12 @@
             document.getElementById('mobileViewTab').querySelector('span').innerHTML=APP_ICONS.view;
             document.querySelector('.preview-feedback > span').innerHTML=APP_ICONS.help;
         }
+        function isTabletViewport() { return window.innerWidth>720 && window.innerWidth<=1240; }
+        function usesMobileLayout() { return window.innerWidth<=720 || (isTabletViewport() && settings?.tabletLayout!=='desktop'); }
         function syncResponsiveClass() {
-            const mobile=window.innerWidth <= 720;
+            const mobile=usesMobileLayout();
             document.documentElement.classList.toggle('mobile-layout',mobile);
+            if (!mobile) document.getElementById('settingsBackdrop').classList.add('hidden');
             const exportWrap=document.querySelector('#optionsDropdown')?.parentElement;
             const host=mobile && !document.body.classList.contains('mobile-previewing')
                 ? document.getElementById(mode==='view'?'mobileViewExport':'mobileEditExport')
@@ -1426,6 +1512,18 @@
                 exportWrap.querySelector('.export-button').setAttribute('aria-expanded','false');
                 host.appendChild(exportWrap);
             }
+            scheduleMobileEntries();
+            scheduleMobileOverview();
+            requestAnimationFrame(()=>{ resizePreview(); syncPreviewScrollbars(); });
+        }
+        const TABLET_NOTICE_KEY='planZajecTabletLayoutNoticeV11';
+        function maybeShowTabletLayoutNotice() {
+            if (!isTabletViewport() || settings.tabletLayout==='desktop') return;
+            try {
+                if (localStorage.getItem(TABLET_NOTICE_KEY)) return;
+                localStorage.setItem(TABLET_NOTICE_KEY,'1');
+            } catch(e) {}
+            showModal('Na tablecie domyślnie działa wygodny układ mobilny Edytuj / Podgląd. W Ustawieniach możesz w każdej chwili przełączyć go na układ komputerowy.',true);
         }
         placeAppActions();
         const times = [
@@ -3191,7 +3289,7 @@
             defaultMode: 'auto',
             parityDate: '',
             parityKind: 'even',
-            autoFit:true, compactDays:true, moveHeaders:false, showOmuAlwaysInView:false
+            autoFit:true, compactDays:true, moveHeaders:false, showOmuAlwaysInView:false, tabletLayout:'mobile'
         };
         let settings = Object.assign({}, DEFAULT_SETTINGS);
 
@@ -3223,6 +3321,7 @@
             document.getElementById('setShowOmuAlways').checked = !!settings.showOmuAlwaysInView;
             document.getElementById('quickShowOmuInput').checked = !!settings.showOmuAlwaysInView;
             document.getElementById('setDefaultMode').value = settings.defaultMode === 'edit' ? 'edit' : 'auto';
+            document.getElementById('setTabletLayout').value = settings.tabletLayout === 'desktop' ? 'desktop' : 'mobile';
             document.getElementById('setParityDate').value = settings.parityDate || '';
             document.getElementById('setParityKind').value = settings.parityKind === 'odd' ? 'odd' : 'even';
         }
@@ -3241,6 +3340,7 @@
             fillSettingsForm();
             saveState(false);
             if (key === 'showOmuAlwaysInView') renderOmu();
+            if (key === 'tabletLayout') syncResponsiveClass();
             if (key === 'defaultMode' || key === 'parityDate' || key === 'parityKind' || key === 'showOmuAlwaysInView') refreshTemporalView();
         }
 
@@ -3385,7 +3485,7 @@
         function setMode(next) {
             const feedback=document.getElementById('previewFeedback');
             if (next === 'view' && mode === 'edit') saveState(false);
-            if (next === 'view' && window.innerWidth > 720 && !stateHasLessons(weekStates[currentWeek])) {
+            if (next === 'view' && !usesMobileLayout() && !stateHasLessons(weekStates[currentWeek])) {
                 document.getElementById('previewFeedbackText').textContent = hasPlanData()
                     ? 'Ten plan tygodniowy nie zawiera jeszcze zajęć. Dodaj wpis albo wybierz tydzień, w którym masz zajęcia.'
                     : 'Plan jest pusty. Dodaj pierwsze zajęcia, aby otworzyć podgląd.';
@@ -3871,7 +3971,7 @@
         }
         function renderMobileOverview() {
             const root=document.getElementById('mobileOverviewList');
-            if(!root || mode!=='view' || window.innerWidth>720) return;
+            if(!root || mode!=='view' || !usesMobileLayout()) return;
             const date=viewedDate(),today=new Date(),weekday=(date.getDay()+6)%7;
             const todayView=mobileOverviewMode==='today',todayKey=localDateString(today);
             root.replaceChildren();
@@ -3989,6 +4089,7 @@
             window.addEventListener('resize', scheduleLayout);
             window.addEventListener('resize',resizePreview);
             syncResponsiveClass();
+            if (readProfile()?.done) maybeShowTabletLayoutNotice();
             window.addEventListener('resize',syncResponsiveClass);
             if (window.ResizeObserver) new ResizeObserver(resizePreview).observe(document.getElementById('previewScroll'));
             const previewScroll=document.getElementById('previewScroll'),previewTopScroll=document.getElementById('previewTopScroll');
