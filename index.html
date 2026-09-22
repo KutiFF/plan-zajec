@@ -563,6 +563,10 @@
         .github-link { display:grid; place-items:center; width:42px; height:42px; margin-left:2px; border-radius:15px; color:var(--ui-muted); text-decoration:none; }
         .github-link:hover,.github-link:focus-visible { background:var(--ui-container); color:var(--ui-ink); }
         .github-link svg { width:21px; height:21px; fill:currentColor; }
+        .settings-backdrop { display:none; }
+        .settings-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .settings-head h2 { margin:0; }
+        .settings-close { display:none; }
         .app-icon { width:20px; height:20px; display:block; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; flex:none; }
         #appWorkspace {
             width:min(100%,2300px); max-width:none; margin:0 auto; min-height:calc(100dvh - 104px);
@@ -916,7 +920,14 @@
             #helpModal .dialog-panel { max-height:min(85dvh,720px); overflow-y:auto; width:calc(100vw - 20px); box-sizing:border-box; padding:18px; }
             #helpModal details { padding:9px 0; border-bottom:1px solid var(--ui-border); }
             #helpModal details summary { min-height:36px; cursor:pointer; overflow-wrap:anywhere; }
-            #settingsPanel { position:fixed; inset:auto 0 0; top:auto; width:100%; max-height:85dvh; box-sizing:border-box; overflow:auto; border-radius:24px 24px 0 0; }
+            .settings-backdrop:not(.hidden) { display:block; position:fixed; inset:0; z-index:140; background:rgba(0,0,0,.55); backdrop-filter:blur(5px); }
+            #settingsPanel { position:fixed; inset:50% auto auto 50%!important; width:min(560px,calc(100vw - 20px)); max-height:min(86dvh,760px); box-sizing:border-box; overflow:auto; padding:20px; border-radius:24px; transform:translate(-50%,-50%); z-index:151; font-size:15px; }
+            #settingsPanel .settings-close { display:grid; place-items:center; flex:none; width:44px; height:44px; padding:0; border:0; border-radius:14px; background:var(--ui-container); color:var(--ui-ink); font-size:22px; }
+            #settingsPanel label:not(.setting-check) { margin:14px 0; }
+            #settingsPanel .setting-check { min-height:48px; margin:6px 0; padding:8px 10px; box-sizing:border-box; border-radius:14px; background:var(--ui-container); }
+            #settingsPanel input[type=checkbox] { width:22px; height:22px; flex:none; }
+            #settingsPanel input:not([type=checkbox]):not([type=color]), #settingsPanel select, #settingsPanel .ui-button { min-height:46px; font-size:16px; border-radius:12px; }
+            #settingsPanel summary { min-height:44px; display:flex; align-items:center; }
             .mobile-bottom-nav { padding-bottom:max(8px,env(safe-area-inset-bottom)); }
             #versionFooter { margin:0 auto; padding:8px 12px calc(76px + env(safe-area-inset-bottom)); }
         }
@@ -939,13 +950,14 @@
     <header class="app-header no-print">
         <div class="brand-mark" aria-hidden="true"><img src="app-icon.png" alt=""></div>
         <div class="brand-copy"><strong>Twój plan zajęć</strong><small>Twój tydzień, po Twojemu</small></div>
-        <a class="github-link" href="https://github.com/KutiFF/plan-zajec" target="_blank" rel="noopener noreferrer" title="Otwórz projekt na GitHubie" aria-label="Otwórz projekt Twój plan zajęć na GitHubie"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.23c0 4.52 2.87 8.36 6.84 9.72.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.89-2.78.62-3.37-1.21-3.37-1.21-.46-1.19-1.11-1.5-1.11-1.5-.91-.64.07-.63.07-.63 1 .08 1.53 1.05 1.53 1.05.9 1.57 2.35 1.12 2.92.86.09-.67.35-1.12.64-1.38-2.22-.26-4.56-1.15-4.56-5.1 0-1.13.39-2.05 1.04-2.78-.1-.26-.45-1.32.1-2.75 0 0 .85-.28 2.75 1.06A9.3 9.3 0 0 1 12 5.12c.85 0 1.71.12 2.51.35 1.9-1.34 2.74-1.06 2.74-1.06.55 1.43.2 2.49.1 2.75.65.73 1.04 1.65 1.04 2.78 0 3.96-2.35 4.83-4.58 5.08.36.32.68.93.68 1.87 0 1.35-.01 2.43-.01 2.76 0 .27.18.6.69.49A10.25 10.25 0 0 0 22 12.23C22 6.58 17.52 2 12 2Z"/></svg></a>
+        <a class="github-link" href="https://github.com/KutiFF/plan-zajec" target="_blank" rel="noopener noreferrer" title="Otwórz projekt na GitHubie" aria-label="Otwórz projekt Twój plan zajęć na GitHubie"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8.003 8.003 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.65 7.65 0 0 1 8 3.93c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></a>
         <div class="app-header-actions">
             <span class="saved-hint" aria-live="polite">Zapis lokalny</span>
             <label class="theme-control" for="appTheme">Wygląd <select id="appTheme" onchange="setAppTheme(this.value)" aria-label="Motyw interfejsu"><option value="system">Systemowy</option><option value="light">Jasny</option><option value="dark">Ciemny</option></select></label>
             <div id="globalActions" class="global-actions" aria-label="Pomoc i ustawienia"></div>
         </div>
     </header>
+    <div id="settingsBackdrop" class="settings-backdrop hidden no-print" onclick="closeSettings()" aria-hidden="true"></div>
     <main id="appWorkspace">
 
     <!-- Pasek Narzędzi -->
@@ -971,8 +983,8 @@
                 </div>
                 <div class="relative" id="settingsAnchor">
                     <button onclick="toggleSettings()" class="ui-button icon-button" title="Ustawienia" aria-label="Ustawienia" aria-controls="settingsPanel">⚙</button>
-                    <div id="settingsPanel" class="hidden absolute settings-menu">
-                        <h2>Ustawienia planu</h2>
+                    <div id="settingsPanel" class="hidden absolute settings-menu" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+                        <div class="settings-head"><h2 id="settingsTitle">Ustawienia planu</h2><button type="button" class="settings-close" onclick="closeSettings()" aria-label="Zamknij ustawienia">×</button></div>
                         <label>Motyw interfejsu<select id="settingTheme" onchange="setAppTheme(this.value)"><option value="system">Systemowy</option><option value="light">Jasny</option><option value="dark">Ciemny</option></select></label>
                         <button class="ui-button full-width" onclick="openWelcome(true)">Nagłówki studiów</button>
                         <label class="setting-check"><input type="checkbox" id="setMoveHeaders" onchange="updateSetting('moveHeaders',this.checked)"> Przesuwaj nagłówki ręcznie</label>
@@ -2475,8 +2487,7 @@
                     if (!document.getElementById(id).classList.contains('hidden')) { e.preventDefault(); close(); return; }
                 }
                 closeAllCellMenus();
-                document.getElementById('settingsPanel').classList.add('hidden');
-                document.querySelector('#settingsAnchor > button').setAttribute('aria-expanded','false');
+                closeSettings(false);
                 document.getElementById('optionsDropdown').classList.add('hidden');
                 document.querySelector('.export-button').setAttribute('aria-expanded','false');
                 return;
@@ -3241,9 +3252,22 @@
         function toggleSettings() {
             const panel = document.getElementById('settingsPanel');
             const hidden = panel.classList.contains('hidden');
-            panel.classList.toggle('hidden');
-            document.querySelector('#settingsAnchor > button').setAttribute('aria-expanded',String(hidden));
-            if (hidden) fillSettingsForm();
+            if (!hidden) return closeSettings();
+            panel.classList.remove('hidden');
+            document.querySelector('#settingsAnchor > button').setAttribute('aria-expanded','true');
+            fillSettingsForm();
+            if (document.documentElement.classList.contains('mobile-layout')) {
+                document.getElementById('settingsBackdrop').classList.remove('hidden');
+                requestAnimationFrame(()=>panel.querySelector('.settings-close').focus());
+            }
+        }
+
+        function closeSettings(restoreFocus = true) {
+            document.getElementById('settingsPanel').classList.add('hidden');
+            document.getElementById('settingsBackdrop').classList.add('hidden');
+            const trigger=document.querySelector('#settingsAnchor > button');
+            trigger.setAttribute('aria-expanded','false');
+            if (restoreFocus) trigger.focus();
         }
 
         function initSettings() {
@@ -3624,7 +3648,7 @@
 
         function readProfile() { try { return JSON.parse(localStorage.getItem(PROFILE_KEY)); } catch(e) { return null; } }
         function openWelcome(editing = false) {
-            document.getElementById('settingsPanel').classList.add('hidden');
+            closeSettings(false);
             const profile = readProfile() || {};
             const existingCourse=document.querySelector('#header-left [contenteditable]')?.textContent.trim();
             document.getElementById('profileCourse').value = profile.course || (editing && existingCourse !== 'Twój kierunek' ? existingCourse : '') || '';
@@ -3699,8 +3723,7 @@
             const panel = document.getElementById('settingsPanel');
             if (!panel || panel.classList.contains('hidden')) return;
             if (!e.target.closest('#settingsPanel') && !e.target.closest('button[onclick*="toggleSettings"]')) {
-                panel.classList.add('hidden');
-                document.querySelector('#settingsAnchor > button').setAttribute('aria-expanded','false');
+                closeSettings(false);
             }
         });
 
