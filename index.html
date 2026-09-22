@@ -447,6 +447,9 @@
         .zoom-control .ui-button { min-width:36px; }
         .zoom-control #previewZoomText { min-width:45px; text-align:center; }
         .preview-shell { background:var(--ui-high); border:1px solid var(--ui-border); border-radius:var(--ui-radius-lg); padding:clamp(12px,2vw,28px); min-width:0; box-sizing:border-box; }
+        .preview-top-scroll { height:14px; margin:0 0 8px; overflow-x:auto; overflow-y:hidden; overscroll-behavior-x:contain; scrollbar-gutter:stable; }
+        .preview-top-scroll.hidden { display:none; }
+        .preview-top-scroll-track { height:1px; }
         .preview-scroll { overflow:auto; overscroll-behavior:contain; min-width:0; }
         #previewStage { width:1123px; height:794px; margin:auto; position:relative; }
         #a4-sheet { position:absolute; inset:0 auto auto 0; transform-origin:top left; overflow:hidden; font-family:var(--font-main); font-size:var(--base-font); background:white; color:black; box-shadow:0 12px 34px rgba(20,29,49,.16); }
@@ -1126,7 +1129,7 @@
         <div id="previewFeedback" class="preview-feedback hidden no-print" role="status" aria-live="polite"><span aria-hidden="true">ⓘ</span><span id="previewFeedbackText"></span><button type="button" class="ui-button" onclick="startFirstEntry()">Dodaj zajęcia</button></div>
         <div id="mobileEditor" class="mobile-editor no-print" aria-label="Zajęcia wybranego dnia"><div class="mobile-editor-head"><strong>Edytuj plan</strong><div id="mobileEditExport" class="mobile-export-host"></div></div><div id="mobileDayTabs" class="mobile-day-tabs"></div><div id="mobileDayEntries" class="mobile-day-entries"></div></div>
         <section id="mobileOverview" class="mobile-overview no-print" aria-label="Mobilny podgląd planu"><div class="mobile-overview-head"><h2>Twój plan</h2><div id="mobileViewExport" class="mobile-export-host"></div></div><div class="mobile-overview-tabs" role="tablist" aria-label="Zakres podglądu"><button type="button" id="mobileTodayTab" role="tab" aria-selected="true" aria-controls="mobileOverviewList" onclick="setMobileOverviewMode('today')">Dzisiaj</button><button type="button" id="mobileWeekTab" role="tab" aria-selected="false" aria-controls="mobileOverviewList" onclick="setMobileOverviewMode('week')">Tydzień</button></div><div class="mobile-overview-nav"><button type="button" onclick="browseMobileOverview(-1)" aria-label="Poprzedni dzień lub tydzień">←</button><input type="date" id="mobileOverviewDatePicker" aria-label="Wybierz datę" onchange="setBrowseDate(this.value)"><button type="button" onclick="browseMobileOverview(1)" aria-label="Następny dzień lub tydzień">→</button><button type="button" onclick="returnToToday()">Dziś</button></div><div id="mobileOverviewDate" class="mobile-overview-date" aria-live="polite"></div><p id="mobileOverviewNote" class="mobile-overview-note"></p><div id="mobileOverviewList" class="mobile-overview-list" role="tabpanel"></div></section>
-        <div class="preview-shell" id="previewShell"><div class="preview-return no-print"><button type="button" class="ui-button" onclick="toggleMobilePreview(false)">← Wróć do planu</button></div><div id="previewScroll" class="preview-scroll"><div id="previewStage">
+        <div class="preview-shell" id="previewShell"><div class="preview-return no-print"><button type="button" class="ui-button" onclick="toggleMobilePreview(false)">← Wróć do planu</button></div><div id="previewTopScroll" class="preview-top-scroll no-print" aria-label="Przewiń dokument w poziomie"><div id="previewTopScrollTrack" class="preview-top-scroll-track"></div></div><div id="previewScroll" class="preview-scroll"><div id="previewStage">
     <!-- Arkusz A4 -->
     <div id="a4-sheet" class="a4-landscape">
         
@@ -3759,6 +3762,14 @@
             stage.style.width=Math.ceil(sheet.offsetWidth*zoom)+'px';
             stage.style.height=Math.ceil(sheet.offsetHeight*zoom)+'px';
             document.getElementById('previewZoomText').textContent=previewZoom===null?'Dopasuj':Math.round(zoom*100)+'%';
+            requestAnimationFrame(syncPreviewScrollbars);
+        }
+        function syncPreviewScrollbars() {
+            const scroll=document.getElementById('previewScroll'),top=document.getElementById('previewTopScroll'),track=document.getElementById('previewTopScrollTrack');
+            if (!scroll || !top || !track) return;
+            track.style.width=scroll.scrollWidth+'px';
+            top.classList.toggle('hidden',scroll.scrollWidth<=scroll.clientWidth+1 || document.documentElement.classList.contains('mobile-layout'));
+            top.scrollLeft=scroll.scrollLeft;
         }
         function changePreviewZoom(delta) {
             const sheet=document.getElementById('a4-sheet'),scroll=document.getElementById('previewScroll');
@@ -3980,6 +3991,9 @@
             syncResponsiveClass();
             window.addEventListener('resize',syncResponsiveClass);
             if (window.ResizeObserver) new ResizeObserver(resizePreview).observe(document.getElementById('previewScroll'));
+            const previewScroll=document.getElementById('previewScroll'),previewTopScroll=document.getElementById('previewTopScroll');
+            previewScroll.addEventListener('scroll',()=>{if(previewTopScroll.scrollLeft!==previewScroll.scrollLeft)previewTopScroll.scrollLeft=previewScroll.scrollLeft;},{passive:true});
+            previewTopScroll.addEventListener('scroll',()=>{if(previewScroll.scrollLeft!==previewTopScroll.scrollLeft)previewScroll.scrollLeft=previewTopScroll.scrollLeft;},{passive:true});
             if (document.fonts?.ready) document.fonts.ready.then(scheduleLayout);
             scheduleLayout();
             renderMobileEntries();
