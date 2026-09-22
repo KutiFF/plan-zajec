@@ -893,11 +893,11 @@
             .mobile-overview-nav input { width:100%; color-scheme:inherit; }
             .mobile-overview-list { display:grid; gap:9px; min-width:0; }
             .mobile-lesson, .mobile-empty, .mobile-week-day { min-width:0; border-radius:20px; background:var(--ui-surface); border:1px solid var(--ui-border); }
-            .mobile-lesson { display:grid; grid-template-columns:82px minmax(0,1fr); gap:12px; padding:14px; }
+            .mobile-lesson { display:grid; grid-template-columns:96px minmax(0,1fr); gap:12px; padding:14px; }
             .mobile-lesson.current { background:var(--ui-primary-container); border-color:var(--ui-primary); }
             .mobile-lesson.next { background:var(--ui-secondary-container); }
             .mobile-lesson.past { opacity:.72; }
-            .mobile-lesson time { font-weight:750; color:var(--ui-secondary); white-space:normal; }
+            .mobile-lesson time { min-width:0; font-weight:750; color:var(--ui-secondary); white-space:nowrap; font-variant-numeric:tabular-nums; }
             .mobile-lesson-body { min-width:0; overflow-wrap:anywhere; }
             .mobile-lesson-body strong { display:block; line-height:1.3; font-size:15px; }
             .mobile-lesson-body p { margin:3px 0 0; color:var(--ui-muted); }
@@ -910,7 +910,7 @@
             .mobile-week-day summary::after { content:'⌄'; color:var(--ui-muted); font-size:19px; }
             .mobile-week-day[open] summary::after { transform:rotate(180deg); }
             .mobile-week-day .mobile-overview-list { padding:0 10px 10px; }
-            .mobile-week-day .mobile-lesson { padding:10px; grid-template-columns:76px minmax(0,1fr); }
+            .mobile-week-day .mobile-lesson { padding:10px; grid-template-columns:96px minmax(0,1fr); }
             .mobile-week-day.today { border-color:var(--ui-primary); }
             #helpModal .shortcut-table { display:none; }
             #helpModal .dialog-panel { max-height:min(85dvh,720px); overflow-y:auto; width:calc(100vw - 20px); box-sizing:border-box; padding:18px; }
@@ -3843,7 +3843,7 @@
             root.replaceChildren();
             document.getElementById('mobileTodayTab').setAttribute('aria-selected',String(todayView));
             document.getElementById('mobileWeekTab').setAttribute('aria-selected',String(!todayView));
-            document.getElementById('mobileTodayTab').textContent=browsedDate?'Dzień':'Dzisiaj';
+            document.getElementById('mobileTodayTab').textContent='Dzisiaj';
             document.getElementById('mobileOverviewDatePicker').value=localDateString(date);
             const navButtons=document.querySelectorAll('.mobile-overview-nav button');
             navButtons[0].setAttribute('aria-label',todayView?'Poprzedni dzień':'Poprzedni tydzień');
@@ -3883,7 +3883,12 @@
                 summary.append(title,meta);section.appendChild(summary);
                 const list=document.createElement('div');list.className='mobile-overview-list';
                 if(!count){const empty=document.createElement('div');empty.className='mobile-empty';empty.textContent='Bez zajęć';list.appendChild(empty);}
-                else item.entries.forEach(entry=>list.appendChild(mobileLessonCard(entry,'')));
+                else item.entries.forEach(entry=>{
+                    const sameDay=localDateString(item.date)===todayKey;
+                    const nowMinutes=today.getHours()*60+today.getMinutes();
+                    const current=sameDay&&!entry.otherDate&&nowMinutes>=timeMinutes(entry.start)&&nowMinutes<timeMinutes(entry.end);
+                    list.appendChild(mobileLessonCard(entry,current?'current':''));
+                });
                 section.appendChild(list);
                 section.addEventListener('toggle',()=>{if(section.open)expandedPreviewDays.add(item.day);else expandedPreviewDays.delete(item.day);});
                 root.appendChild(section);
