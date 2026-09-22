@@ -1,6 +1,6 @@
-// The 1.1 shell contains its complete CSS, JS, icons and fonts.
+// The 1.1.1 shell contains its complete CSS, JS, icons and fonts.
 // The previous release remains available offline as an independent fallback.
-const SHELL_CACHE = 'plan-zajec-shell-v11';
+const SHELL_CACHE = 'plan-zajec-shell-v111';
 const SHELL_URL = new URL('./index.html', self.registration.scope).href;
 const ICON_URL = new URL('./app-icon.png', self.registration.scope).href;
 const PREVIOUS_CACHE = 'plan-zajec-shell-v09';

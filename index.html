@@ -943,7 +943,6 @@
             .mobile-overview-nav button:last-child { grid-column:2; grid-row:2; }
         }
         /* Wybrany układ mobilny działa również na tabletach, niezależnie od media query. */
-        html.mobile-layout .preview-top-scroll { display:none!important; }
         html.mobile-layout .app-header { gap:8px; }
         html.mobile-layout .app-header-actions, html.mobile-layout .global-actions { gap:5px; }
         html.mobile-layout .github-link,
@@ -1026,7 +1025,7 @@
         html.mobile-layout #settingsPanel .settings-close { display:grid; place-items:center; width:44px; height:44px; padding:0; border:0; border-radius:14px; background:var(--ui-container); color:var(--ui-ink); font-size:22px; }
         html.mobile-layout #settingsPanel .setting-check { min-height:48px; margin:6px 0; padding:8px 10px; box-sizing:border-box; border-radius:14px; background:var(--ui-container); }
         html.mobile-layout #settingsPanel input:not([type=checkbox]):not([type=color]), html.mobile-layout #settingsPanel select, html.mobile-layout #settingsPanel .ui-button { min-height:46px; font-size:16px; border-radius:12px; }
-        html.mobile-layout #versionFooter { padding-bottom:calc(76px + env(safe-area-inset-bottom)); }
+        html.mobile-layout #versionFooter { margin-bottom:calc(76px + env(safe-area-inset-bottom)); padding-bottom:8px; }
         @media print {
             #previewFeedback,.global-actions,.document-actions,.mobile-overview { display:none!important; }
             body.view-mode:not(.mobile-previewing) .preview-shell,
@@ -2679,8 +2678,8 @@
             const scope=requested==='current'?currentWeek:requested;
             const includeSettings=document.getElementById('backupIncludeSettings').checked;
             const content=scope==='all'
-                ? { version:'1.1', exportScope:'all', selected:currentWeek, weekMode, parityUsed, weeks:structuredClone(weekStates), lastDividedWeek }
-                : { version:'1.1', exportScope:scope, state:structuredClone(weekStates[scope]) };
+                ? { version:'1.1.1', exportScope:'all', selected:currentWeek, weekMode, parityUsed, weeks:structuredClone(weekStates), lastDividedWeek }
+                : { version:'1.1.1', exportScope:scope, state:structuredClone(weekStates[scope]) };
             if (includeSettings) {
                 content.settings=structuredClone(settings);
                 content.profile=readProfile();
@@ -3922,7 +3921,7 @@
             const scroll=document.getElementById('previewScroll'),top=document.getElementById('previewTopScroll'),track=document.getElementById('previewTopScrollTrack');
             if (!scroll || !top || !track) return;
             track.style.width=scroll.scrollWidth+'px';
-            top.classList.toggle('hidden',scroll.scrollWidth<=scroll.clientWidth+1 || document.documentElement.classList.contains('mobile-layout'));
+            top.classList.toggle('hidden',scroll.scrollWidth<=scroll.clientWidth+1);
             top.scrollLeft=scroll.scrollLeft;
         }
         function changePreviewZoom(delta) {
@@ -4127,6 +4126,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('versionFooter').textContent='Twój plan zajęć · wersja 1.1.1 · 🤖 Vibe coding';
             applyAppTheme();
             initSettings();
             loadState();
