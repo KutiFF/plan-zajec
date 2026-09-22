@@ -835,8 +835,102 @@
             .view-mode .preview-shell { animation:preview-arrive 220ms cubic-bezier(.2,0,0,1) both; }
             @keyframes preview-arrive { from { opacity:.75; translate:0 7px; } to { opacity:1; translate:0 0; } }
         }
+        .mobile-overview { display:none; }
+        #optionsDropdown .mobile-export-preview { display:none; }
+        @media(max-width:720px) {
+            body { min-height:100dvh; }
+            .app-header { gap:6px; padding:0 9px; }
+            .brand-mark { flex:none; width:36px; height:36px; }
+            .brand-copy { flex:1 1 auto; min-width:0; }
+            .brand-copy strong { font-size:clamp(13px,3.9vw,16px); line-height:1.1; }
+            .github-link { flex:none; width:40px; height:44px; margin:0; }
+            .app-header-actions, .global-actions { flex:none; gap:4px; margin-left:0; }
+            #appWorkspace, html.mobile-layout #appWorkspace { min-height:0; padding:10px 10px 12px; }
+            #toolbar .command-row > .toolbar-group:first-child, html.mobile-layout #toolbar .command-row > .toolbar-group:first-child {
+                display:grid; grid-template-columns:minmax(0,1fr) 44px 44px; gap:8px; min-width:0;
+            }
+            #toolbar .command-row > .toolbar-group:first-child > button:first-child { grid-column:1 / -1; }
+            #toolbar .command-row > .toolbar-group:first-child > button { min-width:0; min-height:44px; white-space:normal; }
+            #toolbar .command-row > .toolbar-group:first-child > .toolbar-group { display:contents; }
+            #toolbar .command-row .icon-button { min-width:44px; min-height:44px; }
+            #toolbar .toolbar-secondary, html.mobile-layout #toolbar .toolbar-secondary { flex-wrap:wrap; gap:8px; }
+            #toolbar .toolbar-secondary > label:first-child { width:auto; flex:1 1 150px; min-height:44px; display:flex; align-items:center; }
+            #toolbar .toolbar-secondary > label.toolbar-right { flex:1 1 100%; min-height:44px; margin:0; }
+            #toolbar .remote-days, html.mobile-layout #toolbar .remote-days { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:5px; }
+            #toolbar .remote-days > span { grid-column:1/-1; width:auto; }
+            #toolbar .remote-days label { min-width:0; min-height:48px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; border-radius:12px; background:var(--ui-container); font-size:12px; }
+            .mobile-day-tabs { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:5px; overflow:visible; }
+            .mobile-editor { display:block; }
+            body.view-mode .mobile-editor { display:none; }
+            .mobile-day-tabs button { min-width:0; padding:5px 1px; }
+            .mobile-day-entries { gap:6px; }
+            .mobile-entry { display:grid; grid-template-columns:88px minmax(0,1fr); gap:10px; align-items:center; min-width:0; min-height:56px; padding:10px 12px; }
+            .mobile-entry .entry-time { min-width:0; }
+            .mobile-entry .entry-summary { min-width:0; overflow:visible; white-space:normal; text-overflow:clip; overflow-wrap:anywhere; line-height:1.3; }
+            .mobile-entry .entry-summary small { display:block; color:var(--ui-muted); font-weight:400; margin-top:3px; overflow-wrap:anywhere; }
+            .mobile-entry.break-entry { background:var(--ui-surface); }
+            .mobile-editor-head, .mobile-overview-head { display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:0; }
+            .mobile-editor-head { margin:4px 0 8px; }
+            .mobile-editor-head strong, .mobile-overview-head h2 { margin:0; font-size:18px; letter-spacing:-.03em; }
+            .mobile-overview-head h2 { min-width:0; overflow-wrap:anywhere; }
+            .mobile-export-host .export-button { min-height:44px; padding:8px 12px; background:var(--ui-primary); color:var(--ui-on-primary); border-color:transparent; }
+            #optionsDropdown .mobile-export-preview { display:block; }
+            body.view-mode:not(.mobile-previewing) #toolbar, body.view-mode:not(.mobile-previewing) .document-top,
+            body.view-mode:not(.mobile-previewing) .preview-shell, body.view-mode:not(.mobile-previewing) #previewFeedback { display:none!important; }
+            body.view-mode:not(.mobile-previewing) .mobile-overview { display:block; min-width:0; }
+            body.mobile-previewing .mobile-editor, body.mobile-previewing .mobile-overview { display:none!important; }
+            body.mobile-previewing .preview-shell, body.mobile-previewing .document-top { display:flex; }
+            body.mobile-previewing .preview-shell { display:block; }
+            body.mobile-previewing .preview-return { display:block; margin:0 0 10px; }
+            .mobile-overview { padding:6px 2px 0; }
+            .mobile-overview-date { margin:14px 0 2px; font-size:22px; font-weight:800; letter-spacing:-.04em; overflow-wrap:anywhere; }
+            .mobile-overview-note { margin:2px 0 12px; color:var(--ui-muted); }
+            .mobile-overview-tabs { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; border-radius:18px; background:var(--ui-container); margin:12px 0; }
+            .mobile-overview-tabs button { border:0; border-radius:14px; min-height:44px; color:var(--ui-muted); background:transparent; font-weight:750; }
+            .mobile-overview-tabs button[aria-selected="true"] { background:var(--ui-primary-container); color:var(--ui-ink); }
+            .mobile-overview-nav { display:grid; grid-template-columns:44px minmax(0,1fr) 44px auto; gap:6px; margin:10px 0 14px; align-items:center; }
+            .mobile-overview-nav button, .mobile-overview-nav input { min-width:0; min-height:44px; box-sizing:border-box; border:1px solid var(--ui-border); border-radius:14px; padding:4px 8px; color:var(--ui-ink); background:var(--ui-surface); }
+            .mobile-overview-nav input { width:100%; color-scheme:inherit; }
+            .mobile-overview-list { display:grid; gap:9px; min-width:0; }
+            .mobile-lesson, .mobile-empty, .mobile-week-day { min-width:0; border-radius:20px; background:var(--ui-surface); border:1px solid var(--ui-border); }
+            .mobile-lesson { display:grid; grid-template-columns:82px minmax(0,1fr); gap:12px; padding:14px; }
+            .mobile-lesson.current { background:var(--ui-primary-container); border-color:var(--ui-primary); }
+            .mobile-lesson.next { background:var(--ui-secondary-container); }
+            .mobile-lesson.past { opacity:.72; }
+            .mobile-lesson time { font-weight:750; color:var(--ui-secondary); white-space:normal; }
+            .mobile-lesson-body { min-width:0; overflow-wrap:anywhere; }
+            .mobile-lesson-body strong { display:block; line-height:1.3; font-size:15px; }
+            .mobile-lesson-body p { margin:3px 0 0; color:var(--ui-muted); }
+            .mobile-lesson-body .mobile-lesson-kind { color:var(--ui-primary); font-size:12px; font-weight:750; }
+            .mobile-empty { padding:22px 17px; color:var(--ui-muted); }
+            .mobile-week-day summary { cursor:pointer; list-style:none; min-height:56px; padding:12px 15px; display:flex; align-items:center; gap:10px; }
+            .mobile-week-day summary::-webkit-details-marker { display:none; }
+            .mobile-week-day summary strong { flex:1 1 auto; min-width:0; }
+            .mobile-week-day summary span { flex:0 1 46%; min-width:0; overflow-wrap:anywhere; color:var(--ui-muted); text-align:right; font-size:12px; }
+            .mobile-week-day summary::after { content:'⌄'; color:var(--ui-muted); font-size:19px; }
+            .mobile-week-day[open] summary::after { transform:rotate(180deg); }
+            .mobile-week-day .mobile-overview-list { padding:0 10px 10px; }
+            .mobile-week-day .mobile-lesson { padding:10px; grid-template-columns:76px minmax(0,1fr); }
+            .mobile-week-day.today { border-color:var(--ui-primary); }
+            #helpModal .shortcut-table { display:none; }
+            #helpModal .dialog-panel { max-height:min(85dvh,720px); overflow-y:auto; width:calc(100vw - 20px); box-sizing:border-box; padding:18px; }
+            #helpModal details { padding:9px 0; border-bottom:1px solid var(--ui-border); }
+            #helpModal details summary { min-height:36px; cursor:pointer; overflow-wrap:anywhere; }
+            #settingsPanel { position:fixed; inset:auto 0 0; top:auto; width:100%; max-height:85dvh; box-sizing:border-box; overflow:auto; border-radius:24px 24px 0 0; }
+            .mobile-bottom-nav { padding-bottom:max(8px,env(safe-area-inset-bottom)); }
+            #versionFooter { margin:0 auto; padding:8px 12px calc(76px + env(safe-area-inset-bottom)); }
+        }
+        @media(max-width:340px) {
+            .mobile-overview-nav { grid-template-columns:44px minmax(0,1fr) 44px; }
+            .mobile-overview-nav input { grid-column:1/-1; grid-row:1; }
+            .mobile-overview-nav button:first-child { grid-column:1; grid-row:2; }
+            .mobile-overview-nav button:nth-of-type(2) { grid-column:3; grid-row:2; }
+            .mobile-overview-nav button:last-child { grid-column:2; grid-row:2; }
+        }
         @media print {
-            #previewFeedback,.global-actions,.document-actions { display:none!important; }
+            #previewFeedback,.global-actions,.document-actions,.mobile-overview { display:none!important; }
+            body.view-mode:not(.mobile-previewing) .preview-shell,
+            body:not(.view-mode):not(.mobile-previewing) .preview-shell { display:block!important; }
             #a4-sheet { box-shadow:none!important; }
         }
     </style>
@@ -869,7 +963,8 @@
                 <button id="modeButton" onclick="toggleMode()" class="ui-button">Podgląd</button>
                 <div class="relative"><button onclick="toggleOptionsDropdown(this)" class="ui-button export-button">Eksport ▾</button>
                     <div id="optionsDropdown" class="hidden absolute">
-                        <button onclick="exportToPDF()">Zapisz widoczny plan jako PDF</button>
+                        <button onclick="openMobileDocumentPreview()" class="mobile-export-preview">Podgląd dokumentu A4</button>
+                        <button onclick="exportToPDF()">Drukuj / zapisz PDF</button>
                         <button onclick="exportJSON()">Kopia wszystkich planów (.json)</button>
                         <button onclick="chooseImport();document.getElementById('optionsDropdown').classList.add('hidden');document.querySelector('.export-button').setAttribute('aria-expanded','false')">Importuj plan (.json)</button>
                     </div>
@@ -1017,8 +1112,9 @@
     <div id="documentArea" class="document-area">
         <div class="document-top no-print"><div class="document-heading"><span class="eyebrow">TWOJA PRZESTRZEŃ</span><strong>Plan zajęć</strong><small>Dokument A4 · poziomo</small></div><div id="documentActions" class="document-actions" aria-label="Widok i akcje dokumentu"></div><div class="zoom-control"><button type="button" class="ui-button" onclick="changePreviewZoom(-0.15)" aria-label="Pomniejsz podgląd">−</button><span id="previewZoomText">Dopasuj</span><button type="button" class="ui-button" onclick="changePreviewZoom(0.15)" aria-label="Powiększ podgląd">+</button><button type="button" class="ui-button" onclick="fitPreviewZoom()">Dopasuj</button></div></div>
         <div id="previewFeedback" class="preview-feedback hidden no-print" role="status" aria-live="polite"><span aria-hidden="true">ⓘ</span><span id="previewFeedbackText"></span><button type="button" class="ui-button" onclick="startFirstEntry()">Dodaj zajęcia</button></div>
-        <div id="mobileEditor" class="mobile-editor no-print" aria-label="Zajęcia wybranego dnia"><div id="mobileDayTabs" class="mobile-day-tabs"></div><div id="mobileDayEntries" class="mobile-day-entries"></div><button type="button" class="ui-button mobile-preview-button" onclick="toggleMobilePreview(true)">Pokaż dokument</button></div>
-        <div class="preview-shell" id="previewShell"><div class="preview-return no-print"><button type="button" class="ui-button" onclick="toggleMobilePreview(false)">← Wróć do edycji</button></div><div id="previewScroll" class="preview-scroll"><div id="previewStage">
+        <div id="mobileEditor" class="mobile-editor no-print" aria-label="Zajęcia wybranego dnia"><div class="mobile-editor-head"><strong>Edytuj plan</strong><div id="mobileEditExport" class="mobile-export-host"></div></div><div id="mobileDayTabs" class="mobile-day-tabs"></div><div id="mobileDayEntries" class="mobile-day-entries"></div></div>
+        <section id="mobileOverview" class="mobile-overview no-print" aria-label="Mobilny podgląd planu"><div class="mobile-overview-head"><h2>Twój plan</h2><div id="mobileViewExport" class="mobile-export-host"></div></div><div class="mobile-overview-tabs" role="tablist" aria-label="Zakres podglądu"><button type="button" id="mobileTodayTab" role="tab" aria-selected="true" aria-controls="mobileOverviewList" onclick="setMobileOverviewMode('today')">Dzisiaj</button><button type="button" id="mobileWeekTab" role="tab" aria-selected="false" aria-controls="mobileOverviewList" onclick="setMobileOverviewMode('week')">Tydzień</button></div><div class="mobile-overview-nav"><button type="button" onclick="browseMobileOverview(-1)" aria-label="Poprzedni dzień lub tydzień">←</button><input type="date" id="mobileOverviewDatePicker" aria-label="Wybierz datę" onchange="setBrowseDate(this.value)"><button type="button" onclick="browseMobileOverview(1)" aria-label="Następny dzień lub tydzień">→</button><button type="button" onclick="returnToToday()">Dziś</button></div><div id="mobileOverviewDate" class="mobile-overview-date" aria-live="polite"></div><p id="mobileOverviewNote" class="mobile-overview-note"></p><div id="mobileOverviewList" class="mobile-overview-list" role="tabpanel"></div></section>
+        <div class="preview-shell" id="previewShell"><div class="preview-return no-print"><button type="button" class="ui-button" onclick="toggleMobilePreview(false)">← Wróć do planu</button></div><div id="previewScroll" class="preview-scroll"><div id="previewStage">
     <!-- Arkusz A4 -->
     <div id="a4-sheet" class="a4-landscape">
         
@@ -1076,8 +1172,8 @@
     </main>
 
     <nav class="mobile-bottom-nav no-print" aria-label="Nawigacja mobilna">
-        <button type="button" id="mobileEditTab" onclick="setMode('edit');toggleMobilePreview(false)" aria-label="Przejdź do edycji"><span aria-hidden="true"></span>Edytuj</button>
-        <button type="button" id="mobileViewTab" onclick="setMode('view');toggleMobilePreview(false)" aria-label="Przejdź do podglądu"><span aria-hidden="true"></span>Podgląd</button>
+        <button type="button" id="mobileEditTab" onclick="toggleMobilePreview(false,'edit')" aria-label="Przejdź do edycji"><span aria-hidden="true"></span>Edytuj</button>
+        <button type="button" id="mobileViewTab" onclick="toggleMobilePreview(false,'view')" aria-label="Przejdź do podglądu"><span aria-hidden="true"></span>Podgląd</button>
     </nav>
 
     <div id="saveStatus" class="no-print" role="status" aria-live="polite"></div>
@@ -1192,14 +1288,14 @@
     </div>
     <div id="helpModal" class="dialog-backdrop fixed inset-0 hidden items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="helpTitle" onclick="if(event.target===this) closeHelp()">
         <div class="dialog-panel">
-            <h2 id="helpTitle" class="text-lg font-bold mb-3">Pomoc, FAQ i skróty</h2>
+            <h2 id="helpTitle" class="text-lg font-bold mb-3">Pomoc i FAQ</h2>
             <p class="text-sm mb-3">Plan zapisuje się lokalnie w tej przeglądarce. Na komputerze kliknij komórkę, aby dodać zajęcia; na telefonie wybierz dzień i godzinę z listy. Salę można zostawić pustą, a „Zajęcia zdalne” ukrywają pole sali.</p>
-            <details><summary>Jak przełączać edycję i podgląd?</summary><p class="setting-note">Na komputerze użyj przycisku Podgląd przy dokumencie. Na telefonie służy do tego dolny pasek Edytuj / Podgląd, a z listy zajęć można chwilowo przejść do dokumentu. W podglądzie plan nie jest przypadkowo edytowany.</p></details>
+            <details><summary>Jak przełączać edycję i podgląd?</summary><p class="setting-note">Na telefonie użyj dolnego paska Edytuj / Podgląd. Podgląd pokazuje plan na Dzisiaj albo Tydzień. Arkusz A4 otworzysz przez Eksport → Podgląd dokumentu A4. Na komputerze użyj przycisku Podgląd przy dokumencie.</p></details>
             <details><summary>Jak działają tygodnie parzyste i nieparzyste?</summary><p class="setting-note">Po włączeniu podziału plan tygodniowy oraz oba warianty tygodnia mają osobne zapisy. W widoku użyj strzałek, kalendarza albo przycisku Dzisiaj. W Ustawieniach podaj datę znanego tygodnia i jego parzystość, aby aplikacja wskazywała właściwy wariant automatycznie.</p></details>
             <details><summary>Nagłówki, A4 i wydruk</summary><p class="setting-note">Nagłówki studiów zmienisz w Ustawieniach. Dopasowanie do A4 reaguje na zmiany planu, a puste dni mogą być zwężane. Motyw aplikacji nie zmienia samego dokumentu: wydruk i PDF pozostają niezależnym, czytelnym planem A4.</p></details>
             <details><summary>Jak dodać i sprawdzić OMU?</summary><p class="setting-note">Otwórz OMU, wybierz blok, dzień i godziny, a następnie ustaw powtarzanie co tydzień albo konkretne daty. W podglądzie domyślnie widzisz OMU właściwe dla wybranego tygodnia; w Ustawieniach możesz włączyć stałe pokazywanie wszystkich OMU.</p></details>
             <details><summary>Offline, kopie i bezpieczeństwo danych</summary><p class="setting-note">Dane planu i ustawienia są lokalne dla tej przeglądarki. Aplikacja działa samodzielnie bez internetu, a po pełnym załadowaniu przez HTTPS także offline dzięki pamięci aplikacji. Kopię wszystkich planów pobierzesz z Eksportu jako JSON i później ją zaimportujesz.</p></details>
-            <table class="w-full text-sm border-collapse" aria-label="Skróty klawiszowe"><tbody>
+            <table class="w-full text-sm border-collapse shortcut-table" aria-label="Skróty klawiszowe"><tbody>
                 <tr><td>Strzałki</td><td>Wybierz sąsiednią komórkę (po kliknięciu komórki)</td></tr>
                 <tr><td>Enter</td><td>Dodaj lub edytuj zajęcia w wybranej komórce</td></tr>
                 <tr><td>F2</td><td>Edytuj tekst pojedynczej komórki</td></tr>
@@ -1304,7 +1400,17 @@
             document.querySelector('.preview-feedback > span').innerHTML=APP_ICONS.help;
         }
         function syncResponsiveClass() {
-            document.documentElement.classList.toggle('mobile-layout',window.innerWidth <= 720);
+            const mobile=window.innerWidth <= 720;
+            document.documentElement.classList.toggle('mobile-layout',mobile);
+            const exportWrap=document.querySelector('#optionsDropdown')?.parentElement;
+            const host=mobile && !document.body.classList.contains('mobile-previewing')
+                ? document.getElementById(mode==='view'?'mobileViewExport':'mobileEditExport')
+                : document.getElementById('documentActions');
+            if (exportWrap && host && exportWrap.parentElement!==host) {
+                document.getElementById('optionsDropdown').classList.add('hidden');
+                exportWrap.querySelector('.export-button').setAttribute('aria-expanded','false');
+                host.appendChild(exportWrap);
+            }
         }
         placeAppActions();
         const times = [
@@ -3104,6 +3210,7 @@
             applySettings();
             fillSettingsForm();
             saveState(false);
+            if (key === 'showOmuAlwaysInView') renderOmu();
             if (key === 'defaultMode' || key === 'parityDate' || key === 'parityKind' || key === 'showOmuAlwaysInView') refreshTemporalView();
         }
 
@@ -3235,7 +3342,7 @@
         function setMode(next) {
             const feedback=document.getElementById('previewFeedback');
             if (next === 'view' && mode === 'edit') saveState(false);
-            if (next === 'view' && !stateHasLessons(weekStates[currentWeek])) {
+            if (next === 'view' && window.innerWidth > 720 && !stateHasLessons(weekStates[currentWeek])) {
                 document.getElementById('previewFeedbackText').textContent = hasPlanData()
                     ? 'Ten plan tygodniowy nie zawiera jeszcze zajęć. Dodaj wpis albo wybierz tydzień, w którym masz zajęcia.'
                     : 'Plan jest pusty. Dodaj pierwsze zajęcia, aby otworzyć podgląd.';
@@ -3253,6 +3360,7 @@
             applyModeToHeaders();
             renderOmu();
             refreshTemporalView();
+            syncResponsiveClass();
             scheduleLayout();
             scheduleMobileEntries();
         }
@@ -3307,6 +3415,7 @@
             status.classList.toggle('hidden', mode !== 'view');
             status.textContent = !weekMode ? 'Plan tygodniowy' : `Tydzień ${currentWeek === 'even' ? 'parzysty' : 'nieparzysty'} · ${parityUsesReference() ? 'według daty odniesienia' : 'według numeru tygodnia w kalendarzu'}`;
             updateWeekNavigator(now);
+            scheduleMobileOverview();
         }
         function openHelp() { document.getElementById('helpModal').classList.replace('hidden','flex'); }
         function closeHelp() { document.getElementById('helpModal').classList.replace('flex','hidden'); }
@@ -3620,9 +3729,144 @@
             resizePreview();
         }
         function fitPreviewZoom(){previewZoom=null;resizePreview();}
-        function toggleMobilePreview(open) {
+        let mobileA4ReturnMode='edit';
+        function openMobileDocumentPreview() {
+            mobileA4ReturnMode=mode;
+            document.getElementById('optionsDropdown').classList.add('hidden');
+            document.querySelector('.export-button').setAttribute('aria-expanded','false');
+            if (mode!=='view') setMode('view');
+            toggleMobilePreview(true);
+        }
+        function toggleMobilePreview(open, nextMode=null) {
+            const wasOpen=document.body.classList.contains('mobile-previewing');
             document.body.classList.toggle('mobile-previewing',!!open);
+            if (!open && (nextMode || wasOpen)) setMode(nextMode || mobileA4ReturnMode);
+            syncResponsiveClass();
             if (open) requestAnimationFrame(resizePreview);
+        }
+        let mobileOverviewMode='today', mobileOverviewTimer, expandedWeekKey='', expandedPreviewDays=new Set();
+        function setMobileOverviewMode(next) {
+            if (!['today','week'].includes(next)) return;
+            mobileOverviewMode=next;
+            renderMobileOverview();
+        }
+        function browseMobileOverview(direction) {
+            if (mobileOverviewMode==='week') browseWeek(direction);
+            else setBrowseDate(localDateString(addDays(viewedDate(),Number(direction))));
+        }
+        function scheduleMobileOverview() {
+            clearTimeout(mobileOverviewTimer);
+            mobileOverviewTimer=setTimeout(renderMobileOverview,0);
+        }
+        function scheduleCellForDay(row,day) {
+            let cell=getCell(row,day);
+            if (cell && cell.style.display!=='none') return cell;
+            cell=[...tbody.children[row]?.querySelectorAll('td[data-col]')||[]].find(td=>td.style.display!=='none' && Number(td.dataset.col)<=day && Number(td.dataset.col)+td.colSpan>day);
+            if (cell) return cell;
+            for(let before=row-1;before>=0;before--){
+                const owner=[...tbody.children[before].querySelectorAll('td[data-col]')].find(td=>td.style.display!=='none' && Number(td.dataset.col)<=day && Number(td.dataset.col)+td.colSpan>day && before+td.rowSpan>row);
+                if(owner) return owner;
+            }
+            return null;
+        }
+        function cellLessonsForDay(day) {
+            const entries=[], seen=new Set();
+            for(let row=0;row<times.length;row++) {
+                const cell=scheduleCellForDay(row,day);
+                if (!cell || seen.has(cell) || cell.classList.contains('auto-break')) continue;
+                seen.add(cell);
+                const startRow=Number(cell.dataset.row);
+                const endRow=Math.min(times.length-1,startRow+cell.rowSpan-1);
+                const start=times[startRow].split('-')[0],end=times[endRow].split('-')[1];
+                const parts=[...cell.querySelectorAll('.cell-part')];
+                for(const part of parts.length?parts:[cell.querySelector('.cell-content')].filter(Boolean)) {
+                    const blocks=[...part.querySelectorAll('.entry-block')];
+                    for(const block of blocks) entries.push({start,end,subject:block.querySelector('.entry-subject')?.textContent.trim()||'',type:block.querySelector('.entry-meta')?.textContent.trim()||'',teacher:block.querySelector('.entry-teacher')?.textContent.trim()||'',room:block.querySelector('.entry-room,.entry-room-alt')?.textContent.trim()||'',remote:block.dataset.remote==='1'||!!block.querySelector('.entry-remote')});
+                    const manuals=[...part.querySelectorAll('.manual-entry')];
+                    if(manuals.length) manuals.forEach(item=>{const subject=item.textContent.replace(/\u200B/g,'').trim();if(subject)entries.push({start,end,subject});});
+                    else if(!blocks.length){const subject=part.textContent.replace(/\u200B/g,'').trim();if(subject)entries.push({start,end,subject});}
+                }
+            }
+            return entries;
+        }
+        function dayLessons(day,date) {
+            if(day<0 || day>=days) return [];
+            const entries=cellLessonsForDay(day);
+            const dateKey=localDateString(date);
+            for(const entry of visibleOmuEntries(date)) {
+                if(entry.day!==day) continue;
+                const otherDate=entry.repeat==='dates' && !entry.dates.includes(dateKey);
+                if(otherDate && !settings.showOmuAlwaysInView) continue;
+                entries.push({start:entry.start,end:entry.end,subject:entry.subject,type:[`OMU · blok ${entry.block}`,entry.group?`Grupa ${entry.group}`:'',entry.note].filter(Boolean).join(' · '),teacher:entry.teacher,room:entry.room,remote:entry.remote,otherDate});
+            }
+            return entries.sort((a,b)=>timeMinutes(a.start)-timeMinutes(b.start)||timeMinutes(a.end)-timeMinutes(b.end));
+        }
+        function mobileLessonCard(lesson,state) {
+            const card=document.createElement('article');card.className='mobile-lesson'+(state?' '+state:'');
+            const time=document.createElement('time');time.textContent=lesson.start.replace('.',':')+'–'+lesson.end.replace('.',':');
+            const body=document.createElement('div');body.className='mobile-lesson-body';
+            const subject=document.createElement('strong');subject.textContent=lesson.subject;body.appendChild(subject);
+            const line=(text,className='')=>{if(!text)return;const p=document.createElement('p');p.className=className;p.textContent=text;body.appendChild(p);};
+            line(lesson.type,'mobile-lesson-kind');line(lesson.teacher);
+            line(lesson.remote?'Zdalnie':lesson.room);
+            if(lesson.otherDate) line('OMU · inny termin (pokazano wszystkie OMU)','mobile-lesson-kind');
+            if(state==='current') line('Teraz','mobile-lesson-kind');
+            if(state==='next') line('Następne zajęcia','mobile-lesson-kind');
+            card.append(time,body);return card;
+        }
+        function renderMobileOverview() {
+            const root=document.getElementById('mobileOverviewList');
+            if(!root || mode!=='view' || window.innerWidth>720) return;
+            const date=viewedDate(),today=new Date(),weekday=(date.getDay()+6)%7;
+            const todayView=mobileOverviewMode==='today',todayKey=localDateString(today);
+            root.replaceChildren();
+            document.getElementById('mobileTodayTab').setAttribute('aria-selected',String(todayView));
+            document.getElementById('mobileWeekTab').setAttribute('aria-selected',String(!todayView));
+            document.getElementById('mobileTodayTab').textContent=browsedDate?'Dzień':'Dzisiaj';
+            document.getElementById('mobileOverviewDatePicker').value=localDateString(date);
+            const navButtons=document.querySelectorAll('.mobile-overview-nav button');
+            navButtons[0].setAttribute('aria-label',todayView?'Poprzedni dzień':'Poprzedni tydzień');
+            navButtons[1].setAttribute('aria-label',todayView?'Następny dzień':'Następny tydzień');
+            const label=document.getElementById('mobileOverviewDate'),note=document.getElementById('mobileOverviewNote');
+            const parity=weekMode?` · tydzień ${parityForDate(date)==='even'?'parzysty':'nieparzysty'}`:'';
+            if(todayView) {
+                label.textContent=polishDate(date)+' · '+new Intl.DateTimeFormat('pl-PL',{weekday:'long'}).format(date);
+                note.textContent=weekRelativeText(date)+parity;
+                const lessons=dayLessons(weekday,date),nowMinutes=today.getHours()*60+today.getMinutes();
+                const sameDay=localDateString(date)===todayKey;
+                const nextIndex=sameDay?lessons.findIndex(item=>timeMinutes(item.start)>nowMinutes && !item.otherDate):-1;
+                if(!lessons.length) { const empty=document.createElement('div');empty.className='mobile-empty';empty.textContent='Brak zajęć w tym dniu. Sprawdź widok Tydzień albo wybierz inną datę.';root.appendChild(empty); }
+                lessons.forEach((item,index)=>{
+                    const start=timeMinutes(item.start),end=timeMinutes(item.end);
+                    const state=sameDay&&!item.otherDate?(nowMinutes>=start&&nowMinutes<end?'current':index===nextIndex?'next':nowMinutes>=end?'past':''):'';
+                    root.appendChild(mobileLessonCard(item,state));
+                });
+                return;
+            }
+            const monday=mondayFor(date),weekKey=localDateString(monday);
+            label.textContent=`${polishDate(monday)} – ${polishDate(addDays(monday,6))}`;
+            note.textContent=(weekMode?`Tydzień ${parityForDate(date)==='even'?'parzysty':'nieparzysty'}`:'Plan tygodniowy')+' · '+weekRelativeText(date).split(' · ')[1];
+            const daysData=Array.from({length:days},(_,day)=>({day,date:addDays(monday,day),entries:dayLessons(day,addDays(monday,day))}));
+            if(expandedWeekKey!==weekKey) {
+                expandedWeekKey=weekKey;
+                const chosen=weekday<days?weekday:daysData.find(item=>item.entries.length)?.day??0;
+                expandedPreviewDays=new Set([chosen]);
+            }
+            for(const item of daysData) {
+                const section=document.createElement('details');section.className='mobile-week-day'+(localDateString(item.date)===todayKey?' today':'');
+                section.open=expandedPreviewDays.has(item.day);
+                const summary=document.createElement('summary'),title=document.createElement('strong'),meta=document.createElement('span');
+                title.textContent=dayNames[item.day]+' · '+new Intl.DateTimeFormat('pl-PL',{day:'numeric',month:'short'}).format(item.date);
+                const count=item.entries.length;
+                meta.textContent=count?`${count} ${count===1?'wpis':count<5?'wpisy':'wpisów'} · ${item.entries[0].start}–${item.entries.at(-1).end}`:'Wolne';
+                summary.append(title,meta);section.appendChild(summary);
+                const list=document.createElement('div');list.className='mobile-overview-list';
+                if(!count){const empty=document.createElement('div');empty.className='mobile-empty';empty.textContent='Bez zajęć';list.appendChild(empty);}
+                else item.entries.forEach(entry=>list.appendChild(mobileLessonCard(entry,'')));
+                section.appendChild(list);
+                section.addEventListener('toggle',()=>{if(section.open)expandedPreviewDays.add(item.day);else expandedPreviewDays.delete(item.day);});
+                root.appendChild(section);
+            }
         }
         let mobileDay=Math.max(0,Math.min(4,new Date().getDay()-1)),mobileTimer;
         function scheduleMobileEntries(){clearTimeout(mobileTimer);mobileTimer=setTimeout(renderMobileEntries,0);}
@@ -3637,19 +3881,26 @@
                 tab.onclick=()=>{mobileDay=day;renderMobileEntries();};tabs.appendChild(tab);
             }
             for(let row=0;row<times.length;row++){
-                const cell=getCell(row,mobileDay);
+                const cell=scheduleCellForDay(row,mobileDay);
                 const content=cell?.querySelector('.cell-content');
-                const text=content?.textContent?.replace(/\u200B/g,'').trim()||'';
-                const button=document.createElement('button');button.type='button';button.className='mobile-entry'+(text?'':' empty');
+                const isBreak=!!cell?.classList.contains('auto-break');
+                const text=isBreak?'':content?.textContent?.replace(/\u200B/g,'').trim()||'';
+                const button=document.createElement('button');button.type='button';button.className='mobile-entry'+(text?'':' empty')+(isBreak?' break-entry':'');
                 const time=document.createElement('span');time.className='entry-time';time.textContent=times[row].replace('-', '–');
-                const summary=document.createElement('span');summary.className='entry-summary';summary.textContent=text|| (row===3?'Przerwa':'Dodaj zajęcia');
+                const summary=document.createElement('span');summary.className='entry-summary';
+                const subjects=[...cell?.querySelectorAll('.entry-block .entry-subject,.manual-entry')||[]].map(el=>el.textContent.trim()).filter(Boolean);
+                summary.textContent=subjects.length?subjects.join(' · '):text|| (row===3?'Przerwa':'Dodaj zajęcia');
+                if(subjects.length===1){
+                    const teacher=cell.querySelector('.entry-block .entry-teacher')?.textContent.trim();
+                    const place=cell.querySelector('.entry-block .entry-remote,.entry-block .entry-room')?.textContent.trim();
+                    const detail=[teacher,place].filter(Boolean).join(' · ');
+                    if(detail){const small=document.createElement('small');small.textContent=detail;summary.appendChild(small);}
+                }
                 button.append(time,summary);button.setAttribute('aria-label',time.textContent+': '+summary.textContent);
                 button.onclick=()=>{
                     let target=getCell(row,mobileDay);
-                    if(target?.classList.contains('auto-break')){clearAutoBreaks();target=getCell(row,mobileDay);}
-                    if(!target || target.style.display==='none'){
-                        target=[...tbody.querySelectorAll('td[data-col]')].find(td=>td.style.display!=='none' && Number(td.dataset.col)===mobileDay && Number(td.dataset.row)<=row && Number(td.dataset.row)+td.rowSpan>row);
-                    }
+                    if(scheduleCellForDay(row,mobileDay)?.classList.contains('auto-break')) clearAutoBreaks();
+                    target=scheduleCellForDay(row,mobileDay);
                     if(!target)return;
                     activeCell=target;activePart=null;openEntryModal(null,target.querySelector('.cell-part')||target.querySelector('.cell-content'));
                 };list.appendChild(button);

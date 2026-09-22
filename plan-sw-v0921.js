@@ -1,7 +1,8 @@
 // The 1.0 shell contains its complete CSS, JS, icons and fonts.
 // The previous release remains available offline as an independent fallback.
-const SHELL_CACHE = 'plan-zajec-shell-v10';
+const SHELL_CACHE = 'plan-zajec-shell-v10-mobile';
 const SHELL_URL = new URL('./index.html', self.registration.scope).href;
+const ICON_URL = new URL('./app-icon.png', self.registration.scope).href;
 const PREVIOUS_CACHE = 'plan-zajec-shell-v09';
 const PREVIOUS_URL = new URL('./Plan_zajec_v0.9.html', self.registration.scope).href;
 
@@ -10,7 +11,9 @@ self.addEventListener('install', event => {
     const response = await fetch(SHELL_URL, { cache: 'reload' });
     if (!response.ok) throw new Error('Nowa wersja aplikacji nie jest kompletna');
     const cache = await caches.open(SHELL_CACHE);
-    await cache.put(SHELL_URL, response);
+    const icon = await fetch(ICON_URL, { cache: 'reload' });
+    if (!icon.ok) throw new Error('Brakuje ikony aplikacji');
+    await Promise.all([cache.put(SHELL_URL, response), cache.put(ICON_URL, icon)]);
     await self.skipWaiting();
   })());
 });
@@ -27,6 +30,10 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const request = event.request;
+  if (request.method === 'GET' && request.url === ICON_URL) {
+    event.respondWith(caches.match(ICON_URL).then(cached => cached || fetch(request)));
+    return;
+  }
   if (request.method !== 'GET' || request.mode !== 'navigate') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
