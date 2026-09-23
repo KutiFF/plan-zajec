@@ -191,15 +191,6 @@
                   prowadzącego.
                 </div>
                 <label class="setting-check"
-                  ><input
-                    type="checkbox"
-                    id="setAutoFit"
-                    onchange="updateSetting('autoFit', this.checked)"
-                  />
-                  Automatycznie dopasowuj do A4</label
-                >
-                <div class="setting-note">Dopasowanie reaguje na każdą zmianę planu.</div>
-                <label class="setting-check"
                   ><input type="checkbox" id="setOmuEnabled" onchange="toggleOmu(this.checked)" />
                   Włącz moduły obszarowe</label
                 >
@@ -326,6 +317,13 @@
             </div>
           </div>
         </div>
+        <div class="toolbar-row edit-only module-toolbar">
+          <div>
+            <strong>Moduły obszarowe</strong>
+            <small>Dodawaj i edytuj terminy wspólne dla obu wariantów tygodnia.</small>
+          </div>
+          <button class="ui-button" onclick="openOmu()">Zarządzaj modułami</button>
+        </div>
         <div class="toolbar-row edit-only toolbar-secondary">
           <label class="inline-check"
             ><input type="checkbox" id="weekModeToggle" onchange="toggleWeekMode(this.checked)" />
@@ -344,24 +342,6 @@
           >
           <button id="copyWeeklyButton" class="ui-button hidden" onclick="openBankCopy()">
             Skopiuj plan tygodniowy
-          </button>
-          <button class="ui-button" onclick="openOmu()">Moduły obszarowe</button>
-          <label class="inline-check toolbar-right"
-            ><input
-              id="autoFitToggle"
-              type="checkbox"
-              onchange="updateSetting('autoFit', this.checked)"
-            />
-            Dopasowanie do A4</label
-          >
-          <span id="autofitBadge" class="hidden fit-badge"></span
-          ><button
-            id="autofitResetBtn"
-            onclick="resetAutoFit()"
-            class="hidden ui-button"
-            title="Wyłącz dopasowanie i przywróć 100%"
-          >
-            100%
           </button>
         </div>
         <div id="remoteDays" class="edit-only toolbar-group remote-days">
@@ -1423,9 +1403,9 @@
         <details>
           <summary>Nagłówki, A4 i wydruk</summary>
           <p class="setting-note">
-            Nagłówki studiów zmienisz w Ustawieniach. Dopasowanie do A4 reaguje na zmiany planu, a
-            puste dni mogą być zwężane. Motyw aplikacji nie zmienia samego dokumentu: wydruk i PDF
-            pozostają niezależnym, czytelnym planem A4.
+            Nagłówki studiów zmienisz w Ustawieniach. Dokument automatycznie dopasowuje treść do
+            jednej strony A4, a puste dni mogą być zwężane. Motyw aplikacji nie zmienia samego
+            dokumentu: wydruk i PDF pozostają niezależnym, czytelnym planem A4.
           </p>
         </details>
         <details>

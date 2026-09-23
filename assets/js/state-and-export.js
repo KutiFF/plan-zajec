@@ -759,12 +759,12 @@ function exportToPDF() {
   saveState(false);
   compactColumns();
   updateHeaderZoneHeight();
-  if (settings.autoFit) autoFitToPage();
+  autoFitToPage();
   document.getElementById("optionsDropdown").classList.add("hidden");
   closeAllCellMenus();
   if (sheetOverflows()) {
     showModal(
-      "Plan wykracza poza kartkę A4. Włącz dopasowanie do A4 w ustawieniach lub skróć treść przed zapisem PDF.",
+      "Plan zawiera zbyt dużo treści, aby zmieścić ją czytelnie na jednej kartce A4. Skróć wpisy lub zmniejsz wysokość wierszy w ustawieniach.",
       true,
     );
     return;

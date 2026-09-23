@@ -832,7 +832,7 @@ function scheduleLayout() {
   }, 40);
 }
 function scheduleAutofit() {
-  if (exportInProgress || fitting || !settings.autoFit) return;
+  if (exportInProgress || fitting) return;
   clearTimeout(autofitTimer);
   autofitTimer = setTimeout(autoFitToPage, 80);
 }
@@ -905,7 +905,7 @@ function fitsAtScale(scale) {
 }
 
 function autoFitToPage() {
-  if (exportInProgress || fitting || !settings.autoFit) return;
+  if (exportInProgress || fitting) return;
   fitting = true;
   captureOriginalFontSizes();
 
@@ -933,33 +933,8 @@ function autoFitToPage() {
   fitting = false;
 }
 
-function resetAutoFit() {
-  settings.autoFit = false;
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  fillSettingsForm();
-  document.querySelectorAll("#scheduleBody [data-orig-fs]").forEach((el) => {
-    el.style.fontSize = el.dataset.origFs;
-    delete el.dataset.origFs;
-  });
-  document.documentElement.style.setProperty("--autofit-scale", "1");
-  updateAutofitBadge(1, false);
-  saveState(true);
-}
-
 function updateAutofitBadge(scale, stillOverflows) {
-  const badge = document.getElementById("autofitBadge");
-  const resetBtn = document.getElementById("autofitResetBtn");
-  if (!badge || !resetBtn) return;
-  const pct = Math.round(scale * 100);
-  if (pct >= 100) {
-    badge.classList.add("hidden");
-    resetBtn.classList.add("hidden");
-    return;
-  }
-  badge.textContent = pct + "%" + (stillOverflows ? " ⚠" : "");
-  badge.title = stillOverflows
-    ? "Treść nie mieści się na A4. Skróć wpisy lub zmniejsz wysokość wierszy w ustawieniach."
-    : "Czcionka zmniejszona automatycznie, aby wszystko zmieściło się na jednej stronie.";
-  badge.classList.remove("hidden");
-  resetBtn.classList.remove("hidden");
+  document.documentElement.dataset.a4Fit = stillOverflows
+    ? "overflow"
+    : Math.round(scale * 100).toString();
 }

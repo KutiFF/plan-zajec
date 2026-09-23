@@ -11,7 +11,6 @@ const DEFAULT_SETTINGS = {
   defaultMode: "auto",
   parityDate: "",
   parityKind: "even",
-  autoFit: true,
   compactDays: true,
   moveHeaders: false,
   smartEntrySuggestions: true,
@@ -30,10 +29,6 @@ function applySettings() {
   r.setProperty("--thick-w", settings.thickW + "px");
   r.setProperty("--head-bg", settings.headBg);
   document.body.classList.toggle("headers-fixed", !settings.moveHeaders);
-  if (!settings.autoFit) {
-    applyAutofitScale(1);
-    updateAutofitBadge(1, false);
-  }
   scheduleLayout();
 }
 
@@ -49,8 +44,6 @@ function fillSettingsForm() {
   document.getElementById("setSmartEntrySuggestions").checked =
     !!settings.smartEntrySuggestions;
   applyEntrySuggestionPreference();
-  document.getElementById("setAutoFit").checked = !!settings.autoFit;
-  document.getElementById("autoFitToggle").checked = !!settings.autoFit;
   document.getElementById("setOmuEnabled").checked = omuState.enabled;
   document.getElementById("setShowOmuAlways").checked = !!settings.showOmuAlwaysInView;
   document.getElementById("setShowMobileBreaks").checked =
