@@ -219,6 +219,17 @@ td:hover .cell-hamburger {
 .entry-subject {
   font-weight: 700;
 }
+.teacher-title-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 8px;
+}
+.teacher-university-check {
+  min-height: 34px;
+  white-space: nowrap;
+}
 .entry-block,
 .entry-block > div,
 .entry-subject,

@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS = {
   autoFit: true,
   compactDays: true,
   moveHeaders: false,
+  smartEntrySuggestions: true,
   showOmuAlwaysInView: false,
   tabletLayout: "mobile",
 };
@@ -44,6 +45,9 @@ function fillSettingsForm() {
   document.getElementById("setThickW").value = settings.thickW;
   document.getElementById("setMoveHeaders").checked = !!settings.moveHeaders;
   document.getElementById("setCompactDays").checked = !!settings.compactDays;
+  document.getElementById("setSmartEntrySuggestions").checked =
+    !!settings.smartEntrySuggestions;
+  applyEntrySuggestionPreference();
   document.getElementById("setAutoFit").checked = !!settings.autoFit;
   document.getElementById("autoFitToggle").checked = !!settings.autoFit;
   document.getElementById("setOmuEnabled").checked = omuState.enabled;
@@ -71,6 +75,7 @@ function updateSetting(key, value) {
   fillSettingsForm();
   saveState(false);
   if (key === "showOmuAlwaysInView") renderOmu();
+  if (key === "smartEntrySuggestions") applyEntrySuggestionPreference();
   if (key === "tabletLayout") syncResponsiveClass();
   if (
     key === "defaultMode" ||
@@ -581,6 +586,7 @@ function openOmu(id = null) {
   document.getElementById("omuBankLabel").textContent =
     "Wspólne dla tygodni parzystych i nieparzystych";
   document.getElementById("omuEnabled").checked = omuState.enabled;
+  refreshEntrySuggestions();
   renderOmuList();
   selectOmuEntry(id);
   document.getElementById("omuModal").classList.replace("hidden", "flex");
@@ -626,7 +632,8 @@ function selectOmuEntry(id) {
   document.getElementById("omuOccurrences").value = String(entry?.occurrences || 1);
   document.getElementById("omuNote").value = entry?.note || "";
   const teacher = parseTeacher(entry?.teacher || "");
-  document.getElementById("omuTeacherPrefix").value = entry?.teacher ? teacher.prefix : "dr";
+  document.getElementById("omuTeacherPrefix").value = entry?.teacher ? teacher.prefix : "";
+  document.getElementById("omuTeacherUniversity").checked = teacher.universityProfessor;
   document.getElementById("omuTeacher").value = teacher.name;
   document.getElementById("omuPlaceMode").value = entry?.remote ? "remote" : "onsite";
   document.getElementById("omuRoom").value = entry?.room || "";
@@ -728,13 +735,21 @@ async function saveOmuEntry() {
     countStart: value("omuCountStart"),
     occurrences: Number(value("omuOccurrences")),
     teacher: value("omuTeacher")
-      ? formatTeacher(value("omuTeacherPrefix"), value("omuTeacher"))
+      ? formatTeacher(
+          value("omuTeacherPrefix"),
+          value("omuTeacher"),
+          document.getElementById("omuTeacherUniversity").checked,
+        )
       : "",
     remote: value("omuPlaceMode") === "remote",
     other: document.getElementById("omuAltPlace").checked,
     note: value("omuNote"),
   };
   const unaddedDate = value("omuDateInput");
+  if (candidate.teacher && !value("omuTeacherPrefix")) {
+    showModal("Wybierz tytuł prowadzącego moduł.", true);
+    return;
+  }
   if (
     candidate.repeat === "dates" &&
     validDateString(unaddedDate) &&

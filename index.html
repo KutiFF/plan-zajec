@@ -181,6 +181,18 @@
                 <label class="setting-check"
                   ><input
                     type="checkbox"
+                    id="setSmartEntrySuggestions"
+                    onchange="updateSetting('smartEntrySuggestions', this.checked)"
+                  />
+                  Podpowiadaj zapisane przedmioty i prowadzących</label
+                >
+                <div class="setting-note">
+                  Wybranie znanego prowadzącego uzupełnia jego tytuł. Przedmiot nie zmienia
+                  prowadzącego.
+                </div>
+                <label class="setting-check"
+                  ><input
+                    type="checkbox"
                     id="setAutoFit"
                     onchange="updateSetting('autoFit', this.checked)"
                   />
@@ -1009,6 +1021,7 @@
         <input
           id="entrySubject"
           type="text"
+          list="subjectSuggestions"
           placeholder="np. Zarządzanie publiczne"
           class="w-full border rounded px-2 py-1.5 text-sm mb-2 outline-none focus:ring-1 focus:ring-blue-400"
         />
@@ -1128,33 +1141,40 @@
           />
         </div>
 
-        <label class="block text-xs font-medium text-gray-600 mb-1" for="entryTeacherPrefix"
-          >Tytuł prowadzącego</label
-        >
-        <select
-          id="entryTeacherPrefix"
-          class="w-full border rounded px-2 py-1.5 text-sm mb-2"
-          onchange="updateTeacherPreview()"
-        >
-          <option value="dr" selected>dr (domyślnie)</option>
-          <option value="mgr">mgr</option>
-          <option value="dr hab.">dr hab.</option>
-          <option value="prof.">prof.</option>
-          <option value="prof. dr hab.">prof. dr hab.</option>
-          <option value="prof. UŚ">prof. UŚ</option>
-          <option value="prof. UŚ dr">prof. UŚ dr</option>
-          <option value="prof. UŚ dr hab.">prof. UŚ dr hab.</option>
-          <option value="">Bez tytułu</option>
-        </select>
+        <div class="teacher-title-row">
+          <label class="block text-xs font-medium text-gray-600 mb-1" for="entryTeacherPrefix"
+            >Tytuł prowadzącego<select
+              id="entryTeacherPrefix"
+              class="w-full border rounded px-2 py-1.5 text-sm"
+              onchange="updateTeacherPreview()"
+            >
+              <option value="" selected>Wybierz tytuł</option>
+              <option value="mgr">mgr</option>
+              <option value="dr">dr</option>
+              <option value="dr hab.">dr hab.</option>
+              <option value="prof. dr hab.">prof. dr hab.</option>
+              <option value="prof.">prof.</option>
+            </select></label
+          >
+          <label class="inline-check teacher-university-check"
+            ><input
+              id="entryTeacherUniversity"
+              type="checkbox"
+              onchange="updateTeacherPreview()"
+            />
+            prof. UŚ</label
+          >
+        </div>
         <label class="block text-xs font-medium text-gray-600 mb-1" for="entryTeacher"
           >Imię i nazwisko prowadzącego *</label
         >
         <input
           id="entryTeacher"
           type="text"
+          list="teacherSuggestions"
           placeholder="np. Robert Radek"
           class="w-full border rounded px-2 py-1.5 text-sm mb-1 outline-none focus:ring-1 focus:ring-blue-400"
-          oninput="updateTeacherPreview()"
+          oninput="handleTeacherSuggestion('entry')"
         />
         <div id="teacherPreview" class="text-xs text-gray-500 mb-2" aria-live="polite"></div>
 
@@ -1584,6 +1604,7 @@
             <label class="span-two"
               >Nazwa modułu *<input
                 id="omuSubject"
+                list="subjectSuggestions"
                 maxlength="200"
                 required
                 placeholder="np. Nauka i sztuka"
@@ -1628,24 +1649,27 @@
               </div>
               <div id="omuDates" class="date-chips"></div>
             </div>
-            <label
-              >Tytuł prowadzącego<select id="omuTeacherPrefix">
-                <option value="dr">dr</option>
-                <option value="mgr">mgr</option>
-                <option value="dr hab.">dr hab.</option>
-                <option value="prof.">prof.</option>
-                <option value="prof. dr hab.">prof. dr hab.</option>
-                <option value="prof. UŚ">prof. UŚ</option>
-                <option value="prof. UŚ dr">prof. UŚ dr</option>
-                <option value="prof. UŚ dr hab.">prof. UŚ dr hab.</option>
-                <option value="">Bez tytułu</option>
-              </select></label
-            >
+            <div class="teacher-title-row">
+              <label
+                >Tytuł prowadzącego<select id="omuTeacherPrefix">
+                  <option value="" selected>Wybierz tytuł</option>
+                  <option value="mgr">mgr</option>
+                  <option value="dr">dr</option>
+                  <option value="dr hab.">dr hab.</option>
+                  <option value="prof. dr hab.">prof. dr hab.</option>
+                  <option value="prof.">prof.</option>
+                </select></label
+              ><label class="inline-check teacher-university-check"
+                ><input id="omuTeacherUniversity" type="checkbox" /> prof. UŚ</label
+              >
+            </div>
             <label
               >Prowadzący (opcjonalnie)<input
                 id="omuTeacher"
+                list="teacherSuggestions"
                 maxlength="180"
                 placeholder="Imię i nazwisko"
+                oninput="handleTeacherSuggestion('omu')"
             /></label>
             <label
               >Forma zajęć<select id="omuPlaceMode" onchange="updateOmuPlaceFields()">
@@ -1688,6 +1712,8 @@
         </form>
       </div>
     </div>
+    <datalist id="subjectSuggestions"></datalist>
+    <datalist id="teacherSuggestions"></datalist>
 
     <!-- PL: Wspólny dialog potwierdzenia. EN: Shared confirmation dialog. -->
     <div
