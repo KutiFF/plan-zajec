@@ -2467,6 +2467,25 @@ body {
 .preview-feedback.hidden {
   display: none;
 }
+.mobile-time-status,
+.desktop-time-status {
+  margin: 8px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--ui-primary);
+  border-radius: 14px;
+  background: var(--ui-primary-container);
+  color: var(--ui-ink);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+.desktop-time-status {
+  width: 100%;
+}
+.mobile-lesson.break {
+  background: var(--ui-container);
+  border-style: dashed;
+}
 .view-mode #toolbar {
   grid-column: 1/-1;
   position: relative;

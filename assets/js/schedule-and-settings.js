@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS = {
   moveHeaders: false,
   smartEntrySuggestions: true,
   showOmuAlwaysInView: false,
+  showBreaksInMobilePreview: true,
   tabletLayout: "mobile",
 };
 let settings = Object.assign({}, DEFAULT_SETTINGS);
@@ -52,6 +53,8 @@ function fillSettingsForm() {
   document.getElementById("autoFitToggle").checked = !!settings.autoFit;
   document.getElementById("setOmuEnabled").checked = omuState.enabled;
   document.getElementById("setShowOmuAlways").checked = !!settings.showOmuAlwaysInView;
+  document.getElementById("setShowMobileBreaks").checked =
+    !!settings.showBreaksInMobilePreview;
   document.getElementById("quickShowOmuInput").checked = !!settings.showOmuAlwaysInView;
   document.getElementById("setDefaultMode").value =
     settings.defaultMode === "edit" ? "edit" : "auto";
@@ -75,13 +78,15 @@ function updateSetting(key, value) {
   fillSettingsForm();
   saveState(false);
   if (key === "showOmuAlwaysInView") renderOmu();
+  if (key === "showBreaksInMobilePreview") scheduleMobileOverview();
   if (key === "smartEntrySuggestions") applyEntrySuggestionPreference();
   if (key === "tabletLayout") syncResponsiveClass();
   if (
     key === "defaultMode" ||
     key === "parityDate" ||
     key === "parityKind" ||
-    key === "showOmuAlwaysInView"
+    key === "showOmuAlwaysInView" ||
+    key === "showBreaksInMobilePreview"
   )
     refreshTemporalView();
 }
@@ -335,6 +340,7 @@ function setMode(next) {
   syncResponsiveClass();
   scheduleLayout();
   scheduleMobileEntries();
+  if (mode === "view") maybeShowMobileBreakNotice();
 }
 function toggleMode() {
   setMode(mode === "view" ? "edit" : "view");
@@ -404,6 +410,7 @@ function refreshTemporalView() {
     ? "Plan tygodniowy"
     : `Tydzień ${currentWeek === "even" ? "parzysty" : "nieparzysty"} · ${parityUsesReference() ? "według daty odniesienia" : "według numeru tygodnia w kalendarzu"}`;
   updateWeekNavigator(now);
+  updateDesktopTimeStatus(now, realNow);
   scheduleMobileOverview();
 }
 function openHelp() {

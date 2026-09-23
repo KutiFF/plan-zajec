@@ -213,6 +213,14 @@
                   />
                   W podglądzie zawsze pokazuj moduły</label
                 >
+                <label class="setting-check"
+                  ><input
+                    type="checkbox"
+                    id="setShowMobileBreaks"
+                    onchange="updateSetting('showBreaksInMobilePreview', this.checked)"
+                  />
+                  Pokazuj przerwy w podglądzie mobilnym</label
+                >
                 <button class="ui-button full-width" onclick="openOmu()">Ustaw moduły obszarowe</button>
                 <hr />
                 <label
@@ -417,6 +425,7 @@
             Pokaż wszystkie moduły</label
           >
         </div>
+        <div id="desktopTimeStatus" class="desktop-time-status view-only hidden" role="status"></div>
         <!-- PL: Formatowanie komórek planu. EN: Schedule-cell formatting. -->
         <div class="hidden" aria-hidden="true">
           <!-- PL: Podstawowe formatowanie tekstu. EN: Basic text formatting. -->
@@ -890,6 +899,7 @@
           </div>
           <div id="mobileOverviewDate" class="mobile-overview-date" aria-live="polite"></div>
           <p id="mobileOverviewNote" class="mobile-overview-note"></p>
+          <p id="mobileTimeStatus" class="mobile-time-status hidden" role="status"></p>
           <div id="mobileOverviewList" class="mobile-overview-list" role="tabpanel"></div>
         </section>
         <div class="preview-shell" id="previewShell">
