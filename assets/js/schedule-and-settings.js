@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS = {
   tabletLayout: "mobile",
 };
 let settings = Object.assign({}, DEFAULT_SETTINGS);
+let exportShowAllModules = false;
 
 function applySettings() {
   const r = document.documentElement.style;
@@ -559,7 +560,7 @@ function occurrenceSummary(entry, now = viewedDate()) {
     return `Co tydzień: ${displayDate(entry.rangeStart)} – ${displayDate(entry.rangeEnd)}`;
   if (entry.repeat === "count")
     return `Co tydzień: ${entry.occurrences} spotk. od ${displayDate(entry.countStart)}`;
-  const dates = settings.showOmuAlwaysInView
+  const dates = settings.showOmuAlwaysInView || exportShowAllModules
     ? entry.dates
     : entry.dates.filter((date) => mode === "edit" || dateOccursThisWeek(date, now));
   return dates.map(displayDate).join(", ");
@@ -569,6 +570,7 @@ function visibleOmuEntries(now = viewedDate()) {
   return omuState.entries.filter(
     (entry) =>
       mode === "edit" ||
+      exportShowAllModules ||
       settings.showOmuAlwaysInView ||
       entryOccursThisWeek(entry, now),
   );

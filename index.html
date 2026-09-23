@@ -118,7 +118,7 @@
                 <button onclick="openMobileDocumentPreview()" class="mobile-export-preview">
                   Podgląd A4 i zapis PDF
                 </button>
-                <button onclick="exportToPDF()" class="pdf-export-action">
+                <button onclick="openPrintOptions()" class="pdf-export-action">
                   Drukuj / zapisz PDF
                 </button>
                 <button onclick="openBackupExport()">Pobierz kopię planu (.json)</button>
@@ -1469,7 +1469,7 @@
             </tr>
             <tr>
               <td>Ctrl+P</td>
-              <td>Drukuj lub zapisz PDF</td>
+              <td>Wybierz zawartość, a następnie drukuj lub zapisz PDF</td>
             </tr>
             <tr>
               <td>F1 / Esc</td>
@@ -1510,6 +1510,47 @@
           </button>
         </div>
       </div>
+    </div>
+    <div
+      id="printOptionsModal"
+      class="dialog-backdrop fixed inset-0 hidden items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="printOptionsTitle"
+      onclick="if (event.target === this) closePrintOptions();"
+    >
+      <form
+        class="dialog-panel"
+        onsubmit="
+          event.preventDefault();
+          startPdfExport();
+        "
+      >
+        <h2 id="printOptionsTitle" class="text-lg font-bold">Drukuj lub zapisz PDF</h2>
+        <p class="setting-note">
+          Przed otwarciem systemowego okna wydruku wybierz zawartość dokumentu.
+        </p>
+        <label class="setting-check"
+          ><input id="printAllModules" type="checkbox" checked /> Pokaż wszystkie moduły
+          obszarowe</label
+        >
+        <div class="setting-note">
+          Domyślnie PDF zawiera pełną listę modułów, również z innych tygodni.
+        </div>
+        <label id="printWeekScopeWrap"
+          >Wariant planu<select id="printWeekScope">
+            <option value="current">Tylko aktualnie oglądany tydzień</option>
+            <option value="both">Dwa osobne PDF-y: parzysty i nieparzysty</option>
+          </select></label
+        >
+        <div id="printTwoFilesNote" class="setting-note">
+          Przy wyborze obu tygodni okno wydruku otworzy się kolejno dwa razy.
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="ui-button" onclick="closePrintOptions()">Anuluj</button
+          ><button type="submit" class="ui-button primary-button">Przejdź do wydruku</button>
+        </div>
+      </form>
     </div>
     <div
       id="backupModal"

@@ -433,6 +433,7 @@ document.addEventListener("keydown", function (e) {
   if (e.key === "Escape") {
     for (const [id, close] of [
       ["backupModal", closeBackupExport],
+      ["printOptionsModal", closePrintOptions],
       ["bankCopyModal", closeBankCopy],
       ["omuModal", closeOmu],
       ["helpModal", closeHelp],
@@ -484,6 +485,7 @@ document.addEventListener("keydown", function (e) {
     "helpModal",
     "customModal",
     "backupModal",
+    "printOptionsModal",
     "bankCopyModal",
     "omuModal",
   ].some((id) => !document.getElementById(id).classList.contains("hidden"));
@@ -500,7 +502,7 @@ document.addEventListener("keydown", function (e) {
   }
   if (e.ctrlKey && e.key.toLowerCase() === "p") {
     e.preventDefault();
-    exportToPDF();
+    openPrintOptions();
     return;
   }
   const typing = e.target.closest("input, textarea, select") || e.target.isContentEditable;
@@ -751,25 +753,95 @@ function importJSON(event) {
   event.target.value = "";
   document.getElementById("optionsDropdown").classList.add("hidden");
 }
-function exportToPDF() {
+let pdfExportState = null;
+function openPrintOptions() {
   if (usesMobileLayout() && !document.body.classList.contains("mobile-previewing")) {
     openMobileDocumentPreview();
     return;
   }
+  document.getElementById("optionsDropdown").classList.add("hidden");
+  document.querySelector(".export-button").setAttribute("aria-expanded", "false");
+  document.getElementById("printAllModules").checked = true;
+  document.getElementById("printWeekScope").value = "current";
+  document.getElementById("printWeekScopeWrap").classList.toggle("hidden", !weekMode);
+  document.getElementById("printTwoFilesNote").classList.toggle("hidden", !weekMode);
+  document.getElementById("printOptionsModal").classList.replace("hidden", "flex");
+  requestAnimationFrame(() => document.getElementById("printAllModules").focus());
+}
+function closePrintOptions() {
+  document.getElementById("printOptionsModal").classList.replace("flex", "hidden");
+}
+function printDateForWeek(base, week) {
+  if (!weekMode || parityForDate(base) === week) return base;
+  return addDays(base, 7);
+}
+function preparePrintVariant(item) {
+  currentWeek = item.week;
+  browsedDate = item.date ? localDateString(item.date) : browsedDate;
+  loadStateStr(JSON.stringify(weekStates[currentWeek]));
+  updateWeekUI();
+  renderOmu();
   saveState(false);
   compactColumns();
   updateHeaderZoneHeight();
   autoFitToPage();
-  document.getElementById("optionsDropdown").classList.add("hidden");
   closeAllCellMenus();
+}
+function restoreAfterPdfExport() {
+  if (!pdfExportState) return;
+  const { originalWeek, originalDate, originalTitle } = pdfExportState;
+  currentWeek = originalWeek;
+  browsedDate = originalDate;
+  exportShowAllModules = false;
+  document.title = originalTitle;
+  loadStateStr(JSON.stringify(weekStates[currentWeek]));
+  updateWeekUI();
+  renderOmu();
+  refreshTemporalView();
+  pdfExportState = null;
+  requestAnimationFrame(resizePreview);
+}
+function printNextPdfVariant() {
+  if (!pdfExportState?.queue.length) {
+    restoreAfterPdfExport();
+    return;
+  }
+  const item = pdfExportState.queue.shift();
+  preparePrintVariant(item);
   if (sheetOverflows()) {
+    restoreAfterPdfExport();
     showModal(
       "Plan zawiera zbyt dużo treści, aby zmieścić ją czytelnie na jednej kartce A4. Skróć wpisy lub zmniejsz wysokość wierszy w ustawieniach.",
       true,
     );
     return;
   }
+  document.title =
+    pdfExportState.originalTitle +
+    (weekMode ? ` — tydzień ${item.week === "even" ? "parzysty" : "nieparzysty"}` : "");
+  let continued = false;
+  const next = () => {
+    if (continued) return;
+    continued = true;
+    window.removeEventListener("afterprint", next);
+    setTimeout(printNextPdfVariant, 150);
+  };
+  window.addEventListener("afterprint", next, { once: true });
   // PL: Natywny wydruk zachowuje HTML oraz wektorowy tekst i linie dokumentu.
   // EN: Native printing preserves the document HTML, vector text, and lines.
   window.print();
+}
+function startPdfExport() {
+  const baseDate = viewedDate();
+  const scope = document.getElementById("printWeekScope").value;
+  const variants = weekMode && scope === "both" ? ["even", "odd"] : [currentWeek];
+  exportShowAllModules = document.getElementById("printAllModules").checked;
+  pdfExportState = {
+    originalWeek: currentWeek,
+    originalDate: browsedDate,
+    originalTitle: document.title,
+    queue: variants.map((week) => ({ week, date: printDateForWeek(baseDate, week) })),
+  };
+  closePrintOptions();
+  printNextPdfVariant();
 }
