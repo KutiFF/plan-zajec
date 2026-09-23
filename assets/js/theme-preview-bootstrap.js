@@ -148,7 +148,12 @@ function cellLessonsForDay(day) {
           start,
           end,
           subject: block.querySelector(".entry-subject")?.textContent.trim() || "",
-          type: capitalizeLessonType(block.querySelector(".entry-meta")?.textContent),
+          type: [
+            capitalizeLessonType(block.querySelector(".entry-meta")?.textContent),
+            block.querySelector(".entry-group")?.textContent.trim() || "",
+          ]
+            .filter(Boolean)
+            .join(" · "),
           teacher: block.querySelector(".entry-teacher")?.textContent.trim() || "",
           room: block.querySelector(".entry-room,.entry-room-alt")?.textContent.trim() || "",
           remote: block.dataset.remote === "1" || !!block.querySelector(".entry-remote"),
@@ -396,7 +401,8 @@ function renderMobileEntries() {
       const place = cell
         .querySelector(".entry-block .entry-remote,.entry-block .entry-room")
         ?.textContent.trim();
-      const detail = [teacher, place].filter(Boolean).join(" · ");
+      const group = cell.querySelector(".entry-block .entry-group")?.textContent.trim();
+      const detail = [group, teacher, place].filter(Boolean).join(" · ");
       if (detail) {
         const small = document.createElement("small");
         small.textContent = detail;
@@ -435,7 +441,10 @@ window.addEventListener("DOMContentLoaded", () => {
   initSettings();
   loadState();
   document.getElementById("entrySubject").addEventListener("input", updateSubjectColorFields);
-  document.getElementById("entryType").addEventListener("input", updateSubjectColorFields);
+  document.getElementById("entryType").addEventListener("input", () => {
+    updateSubjectColorFields();
+    updateEntryGroupField();
+  });
   setMode(settings.defaultMode === "edit" ? "edit" : hasPlanData() ? "view" : "edit");
   const profile = readProfile();
   if (!profile?.done) {

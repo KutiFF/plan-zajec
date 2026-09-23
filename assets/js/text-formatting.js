@@ -553,6 +553,13 @@ function updateRoomField() {
     ? "np. Bankowa 11B, pokój 213"
     : "np. 147 lub Aula 1";
 }
+function typeUsesGroup(type) {
+  return !/^\s*wykład\b/i.test(type || "");
+}
+function updateEntryGroupField() {
+  const field = document.getElementById("entryGroupField");
+  field.classList.toggle("hidden", !typeUsesGroup(document.getElementById("entryType").value));
+}
 function normalizeRoom(value, other = false) {
   const room = value.trim().replace(/\s+/g, " ");
   if (other) return room;
@@ -573,6 +580,7 @@ function openEntryModal(btn, preferred) {
   const fields = {
     entrySubject: ".entry-subject",
     entryType: ".entry-meta",
+    entryGroup: ".entry-group",
     entryTeacher: ".entry-teacher",
     entryRoom: ".entry-room, .entry-room-alt",
   };
@@ -597,6 +605,7 @@ function openEntryModal(btn, preferred) {
     : document.querySelectorAll("#scheduleTable thead th")[Number(cell.dataset.col) + 1]?.dataset
         .remote === "1";
   updateRoomField();
+  updateEntryGroupField();
   const palette = entry?.dataset.subjectColor || "auto";
   const radio = document.querySelector(
     `input[name="entrySubjectColor"][value="${["auto", "none", "yellow", "cyan", "pink", "red", "custom"].includes(palette) ? palette : "auto"}"]`,
@@ -645,6 +654,7 @@ function selectedSubjectStyle(type, palette) {
 async function submitEntryModal() {
   const subject = document.getElementById("entrySubject").value.trim();
   const type = capitalizeLessonType(document.getElementById("entryType").value);
+  const group = typeUsesGroup(type) ? document.getElementById("entryGroup").value.trim() : "";
   const teacherName = document.getElementById("entryTeacher").value.trim();
   const teacherPrefix = document.getElementById("entryTeacherPrefix").value;
   const teacher = formatTeacher(teacherPrefix, teacherName);
@@ -694,6 +704,7 @@ async function submitEntryModal() {
     escapeHtmlEntry(subject) +
     "</span></div>" +
     (type ? '<div class="entry-meta">' + escapeHtmlEntry(type) + "</div>" : "") +
+    (group ? '<div class="entry-group">Grupa ' + escapeHtmlEntry(group) + "</div>" : "") +
     '<div class="entry-teacher">' +
     escapeHtmlEntry(teacher) +
     "</div>" +

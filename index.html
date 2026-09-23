@@ -1115,6 +1115,18 @@
           <option value="Lektorat"></option>
           <option value="Ścieżka dydaktyczna"></option>
         </datalist>
+        <div id="entryGroupField">
+          <label class="block text-xs font-medium text-gray-600 mb-1" for="entryGroup"
+            >Numer grupy (opcjonalnie)</label
+          >
+          <input
+            id="entryGroup"
+            type="text"
+            maxlength="80"
+            placeholder="np. 2"
+            class="w-full border rounded px-2 py-1.5 text-sm mb-2 outline-none focus:ring-1 focus:ring-blue-400"
+          />
+        </div>
 
         <label class="block text-xs font-medium text-gray-600 mb-1" for="entryTeacherPrefix"
           >Tytuł prowadzącego</label
@@ -1469,7 +1481,7 @@
     >
       <div class="dialog-panel">
         <h2 id="bankCopyTitle" class="text-lg font-bold">Skopiuj plan tygodniowy</h2>
-        <p class="setting-note">
+        <p id="bankCopyDescription" class="setting-note">
           Plan tygodniowy i plan z podziałem mają oddzielne zapisy. Wybierz, gdzie skopiować
           zajęcia. Oryginał pozostanie w planie tygodniowym.
         </p>

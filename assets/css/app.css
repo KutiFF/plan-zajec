@@ -1057,10 +1057,12 @@ button {
   margin-top: 7px;
 }
 .date-chip {
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--ui-outline);
   border-radius: 4px;
   padding: 3px 6px;
-  background: #eff6ff;
+  color: var(--ui-ink);
+  -webkit-text-fill-color: var(--ui-ink);
+  background: var(--ui-container);
   font-size: 12px;
 }
 #omuSection {
@@ -3020,10 +3022,14 @@ html.mobile-layout #toolbar .command-row {
   margin: 0 0 8px;
   padding: 8px;
   box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
 }
 html.mobile-layout #toolbar .command-row > .toolbar-group:first-child {
   display: flex;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 html.mobile-layout #toolbar .toolbar-secondary {
   display: flex;

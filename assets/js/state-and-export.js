@@ -265,7 +265,14 @@ function updateWeekUI() {
   document.getElementById("weekModeToggle").checked = weekMode;
   document.getElementById("weekSelectorWrap").classList.toggle("hidden", !weekMode);
   if (weekMode) document.getElementById("weekSelector").value = currentWeek;
-  document.getElementById("copyWeeklyButton").classList.toggle("hidden", !weekMode);
+  const copyButton = document.getElementById("copyWeeklyButton");
+  copyButton.classList.toggle("hidden", !weekMode);
+  copyButton.textContent =
+    currentWeek === "even"
+      ? "Kopiuj do nieparzystego"
+      : currentWeek === "odd"
+        ? "Kopiuj do parzystego"
+        : "Skopiuj plan tygodniowy";
   syncRemoteDayCheckboxes();
 }
 function setDefaultWeekText(state, text) {
@@ -317,30 +324,60 @@ function toggleWeekMode(enabled) {
   history = [JSON.stringify(snapshotState())];
   historyIndex = 0;
   persistWeeks();
-  if (firstUse && stateHasLessons(weekStates.common)) openBankCopy();
+  if (firstUse && stateHasLessons(weekStates.common)) openBankCopy("common");
   else if (enabled) announce("Otwarty osobny zapis tygodni parzystych i nieparzystych.");
 }
-function openBankCopy() {
+function openBankCopy(source = currentWeek) {
   if (!weekMode) return;
-  document.getElementById("bankCopyTarget").value = "both";
-  document.getElementById("bankCopyModal").classList.replace("hidden", "flex");
+  const target = document.getElementById("bankCopyTarget");
+  const modal = document.getElementById("bankCopyModal");
+  const title = document.getElementById("bankCopyTitle");
+  const description = document.getElementById("bankCopyDescription");
+  modal.dataset.source = source;
+  if (source === "common") {
+    title.textContent = "Skopiuj plan tygodniowy";
+    description.textContent =
+      "Plan tygodniowy i plan z podziałem mają oddzielne zapisy. Wybierz, gdzie skopiować zajęcia. Oryginał pozostanie w planie tygodniowym.";
+    target.replaceChildren(
+      new Option("Obu tygodni", "both"),
+      new Option("Tygodnia parzystego", "even"),
+      new Option("Tygodnia nieparzystego", "odd"),
+    );
+  } else {
+    const sourceLabel = source === "even" ? "parzystego" : "nieparzystego";
+    const targetWeek = source === "even" ? "odd" : "even";
+    const targetLabel = targetWeek === "even" ? "parzystego" : "nieparzystego";
+    title.textContent = "Skopiuj tydzień " + sourceLabel;
+    description.textContent =
+      "Skopiuj zajęcia z tygodnia " +
+      sourceLabel +
+      " do tygodnia " +
+      targetLabel +
+      ". Później możesz zmienić tylko różniące się wpisy.";
+    target.replaceChildren(new Option("Tygodnia " + targetLabel, targetWeek));
+  }
+  modal.classList.replace("hidden", "flex");
 }
 function closeBankCopy() {
-  document.getElementById("bankCopyModal").classList.replace("flex", "hidden");
+  const modal = document.getElementById("bankCopyModal");
+  delete modal.dataset.source;
+  modal.classList.replace("flex", "hidden");
 }
 async function copyWeeklyBank() {
+  const modal = document.getElementById("bankCopyModal");
+  const source = modal.dataset.source || currentWeek;
   const value = document.getElementById("bankCopyTarget").value;
-  const targets = value === "both" ? ["even", "odd"] : [value];
+  const targets = source === "common" && value === "both" ? ["even", "odd"] : [value];
   if (targets.some((key) => stateHasLessons(weekStates[key]))) {
     if (
       !(await showModal(
-        "Zastąpić zajęcia w wybranych tygodniach kopią planu tygodniowego? Plan tygodniowy pozostanie zapisany.",
+        "Zastąpić zajęcia w wybranych tygodniach kopią? Plan źródłowy pozostanie zapisany.",
       ))
     )
       return;
   }
   for (const key of targets) {
-    weekStates[key] = structuredClone(weekStates.common);
+    weekStates[key] = structuredClone(weekStates[source]);
     setDefaultWeekText(
       weekStates[key],
       key === "even" ? "Tydzień parzysty" : "Tydzień nieparzysty",
