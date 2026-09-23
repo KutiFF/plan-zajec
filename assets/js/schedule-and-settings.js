@@ -265,7 +265,6 @@ function returnToToday() {
   refreshTemporalView();
 }
 function stateHasLessons(state) {
-  if (normalizeOmu(state?.omu).entries.length) return true;
   if (!state?.table) return false;
   const template = document.createElement("template");
   template.innerHTML = state.table;
@@ -275,7 +274,13 @@ function stateHasLessons(state) {
   );
 }
 function hasPlanData() {
-  return [weekStates.common, weekStates.even, weekStates.odd].some(stateHasLessons);
+  return (
+    omuState.entries.length > 0 ||
+    [weekStates.common, weekStates.even, weekStates.odd].some(stateHasLessons)
+  );
+}
+function hasAreaModulesThisWeek(now = viewedDate()) {
+  return omuState.enabled && omuState.entries.some((entry) => entryOccursThisWeek(entry, now));
 }
 function startFirstEntry() {
   const cell = tbody.querySelector('td[data-col="0"]:not(.auto-break)');
@@ -293,7 +298,12 @@ function applyModeToHeaders() {
 function setMode(next) {
   const feedback = document.getElementById("previewFeedback");
   if (next === "view" && mode === "edit") saveState(false);
-  if (next === "view" && !usesMobileLayout() && !stateHasLessons(weekStates[currentWeek])) {
+  if (
+    next === "view" &&
+    !usesMobileLayout() &&
+    !stateHasLessons(weekStates[currentWeek]) &&
+    !hasAreaModulesThisWeek()
+  ) {
     document.getElementById("previewFeedbackText").textContent = hasPlanData()
       ? "Ten plan tygodniowy nie zawiera jeszcze zajęć. Dodaj wpis albo wybierz tydzień, w którym masz zajęcia."
       : "Plan jest pusty. Dodaj pierwsze zajęcia, aby otworzyć podgląd.";
@@ -424,6 +434,24 @@ function localDateString(date) {
 function displayDate(value) {
   return value.slice(8, 10) + "." + value.slice(5, 7) + "." + value.slice(0, 4);
 }
+function weekdayForDate(value) {
+  return (new Date(value + "T12:00:00Z").getUTCDay() + 6) % 7;
+}
+function addIsoDays(value, daysToAdd) {
+  const date = new Date(value + "T12:00:00Z");
+  date.setUTCDate(date.getUTCDate() + daysToAdd);
+  return date.toISOString().slice(0, 10);
+}
+function validWeeklyRange(start, end, day) {
+  return (
+    validDateString(start) &&
+    validDateString(end) &&
+    start <= end &&
+    weekdayForDate(start) === day &&
+    weekdayForDate(end) === day &&
+    weekNumberSince(start, dateFromInput(end)) !== null
+  );
+}
 function normalizeOmu(raw) {
   const result = { enabled: !!raw?.enabled, entries: [] };
   if (!Array.isArray(raw?.entries)) return result;
@@ -443,13 +471,29 @@ function normalizeOmu(raw) {
       !entry.subject.trim()
     )
       continue;
-    const repeat = entry.repeat === "dates" ? "dates" : "weekly";
+    const repeat = ["dates", "range", "count"].includes(entry.repeat)
+      ? entry.repeat
+      : "weekly";
     const dates = [
       ...new Set(Array.isArray(entry.dates) ? entry.dates.filter(validDateString) : []),
     ].sort();
     if (
       repeat === "dates" &&
       (!dates.length || dates.some((d) => (new Date(d + "T12:00:00Z").getUTCDay() + 6) % 7 !== day))
+    )
+      continue;
+    const rangeStart = String(entry.rangeStart || "");
+    const rangeEnd = String(entry.rangeEnd || "");
+    const countStart = String(entry.countStart || "");
+    const occurrences = Number(entry.occurrences);
+    if (repeat === "range" && !validWeeklyRange(rangeStart, rangeEnd, day)) continue;
+    if (
+      repeat === "count" &&
+      (!validDateString(countStart) ||
+        weekdayForDate(countStart) !== day ||
+        !Number.isInteger(occurrences) ||
+        occurrences < 1 ||
+        occurrences > 150)
     )
       continue;
     result.entries.push({
@@ -467,12 +511,53 @@ function normalizeOmu(raw) {
       note: String(entry.note || "").slice(0, 240),
       repeat,
       dates,
+      rangeStart: repeat === "range" ? rangeStart : "",
+      rangeEnd: repeat === "range" ? rangeEnd : "",
+      countStart: repeat === "count" ? countStart : "",
+      occurrences: repeat === "count" ? occurrences : 0,
     });
   }
   return result;
 }
+
+// PL: Moduły są wspólne dla całego planu; termin decyduje wyłącznie o widoczności.
+// EN: Area modules are shared by the whole schedule; dates only control visibility.
+function entryOccursOnDate(entry, value) {
+  if (!validDateString(value) || weekdayForDate(value) !== entry.day) return false;
+  if (entry.repeat === "weekly") return true;
+  if (entry.repeat === "dates") return entry.dates.includes(value);
+  if (entry.repeat === "range") return value >= entry.rangeStart && value <= entry.rangeEnd;
+  if (entry.repeat === "count") {
+    const last = addIsoDays(entry.countStart, (entry.occurrences - 1) * 7);
+    return value >= entry.countStart && value <= last;
+  }
+  return false;
+}
 function dateOccursThisWeek(value, now) {
   return weekNumberSince(value, now) === 0;
+}
+function entryOccursThisWeek(entry, now) {
+  if (entry.repeat === "weekly") return true;
+  if (entry.repeat === "dates") return entry.dates.some((value) => dateOccursThisWeek(value, now));
+  const monday = localDateString(mondayFor(now));
+  const sunday = localDateString(addDays(mondayFor(now), 6));
+  if (entry.repeat === "range") return entry.rangeStart <= sunday && entry.rangeEnd >= monday;
+  if (entry.repeat === "count") {
+    const last = addIsoDays(entry.countStart, (entry.occurrences - 1) * 7);
+    return entry.countStart <= sunday && last >= monday;
+  }
+  return false;
+}
+function occurrenceSummary(entry, now = viewedDate()) {
+  if (entry.repeat === "weekly") return "Co tydzień";
+  if (entry.repeat === "range")
+    return `Co tydzień: ${displayDate(entry.rangeStart)} – ${displayDate(entry.rangeEnd)}`;
+  if (entry.repeat === "count")
+    return `Co tydzień: ${entry.occurrences} spotk. od ${displayDate(entry.countStart)}`;
+  const dates = settings.showOmuAlwaysInView
+    ? entry.dates
+    : entry.dates.filter((date) => mode === "edit" || dateOccursThisWeek(date, now));
+  return dates.map(displayDate).join(", ");
 }
 function visibleOmuEntries(now = viewedDate()) {
   if (!omuState.enabled) return [];
@@ -480,8 +565,7 @@ function visibleOmuEntries(now = viewedDate()) {
     (entry) =>
       mode === "edit" ||
       settings.showOmuAlwaysInView ||
-      entry.repeat === "weekly" ||
-      entry.dates.some((date) => dateOccursThisWeek(date, now)),
+      entryOccursThisWeek(entry, now),
   );
 }
 function toggleOmu(enabled) {
@@ -495,7 +579,7 @@ function openOmu(id = null) {
   if (mode === "view") setMode("edit");
   document.getElementById("settingsPanel").classList.add("hidden");
   document.getElementById("omuBankLabel").textContent =
-    defaultWeekLabel() + " · wpisy są częścią tego zapisu";
+    "Wspólne dla tygodni parzystych i nieparzystych";
   document.getElementById("omuEnabled").checked = omuState.enabled;
   renderOmuList();
   selectOmuEntry(id);
@@ -536,6 +620,10 @@ function selectOmuEntry(id) {
   document.getElementById("omuSubject").value = entry?.subject || "";
   document.getElementById("omuGroup").value = entry?.group || "";
   document.getElementById("omuRepeat").value = entry?.repeat || "weekly";
+  document.getElementById("omuRangeStart").value = entry?.rangeStart || "";
+  document.getElementById("omuRangeEnd").value = entry?.rangeEnd || "";
+  document.getElementById("omuCountStart").value = entry?.countStart || "";
+  document.getElementById("omuOccurrences").value = String(entry?.occurrences || 1);
   document.getElementById("omuNote").value = entry?.note || "";
   const teacher = parseTeacher(entry?.teacher || "");
   document.getElementById("omuTeacherPrefix").value = entry?.teacher ? teacher.prefix : "dr";
@@ -557,9 +645,12 @@ function setOmuBlockDefaults() {
   document.getElementById("omuEnd").value = first ? "16:00" : "18:30";
 }
 function updateOmuDateFields() {
+  const repeat = document.getElementById("omuRepeat").value;
   document
     .getElementById("omuDateFields")
-    .classList.toggle("hidden", document.getElementById("omuRepeat").value !== "dates");
+    .classList.toggle("hidden", repeat !== "dates");
+  document.getElementById("omuRangeFields").classList.toggle("hidden", repeat !== "range");
+  document.getElementById("omuCountFields").classList.toggle("hidden", repeat !== "count");
 }
 function updateOmuPlaceFields() {
   document
@@ -600,9 +691,21 @@ function renderOmuDates() {
 }
 function omuEntriesOverlap(a, b) {
   if (a.day !== b.day || a.start >= b.end || b.start >= a.end) return false;
-  return (
-    a.repeat === "weekly" || b.repeat === "weekly" || a.dates.some((date) => b.dates.includes(date))
-  );
+  const occurrenceDates = (entry) => {
+    if (entry.repeat === "weekly") return null;
+    if (entry.repeat === "dates") return entry.dates;
+    const start = entry.repeat === "range" ? entry.rangeStart : entry.countStart;
+    const limit = entry.repeat === "range" ? 150 : entry.occurrences;
+    const dates = [];
+    for (let index = 0, date = start; index < limit; index += 1, date = addIsoDays(date, 7)) {
+      if (entry.repeat === "range" && date > entry.rangeEnd) break;
+      dates.push(date);
+    }
+    return dates;
+  };
+  const first = occurrenceDates(a);
+  const second = occurrenceDates(b);
+  return first === null || second === null || first.some((date) => second.includes(date));
 }
 async function saveOmuEntry() {
   const value = (id) => document.getElementById(id).value.trim();
@@ -620,6 +723,10 @@ async function saveOmuEntry() {
     group: value("omuGroup"),
     repeat: value("omuRepeat"),
     dates: [...draftOmuDates],
+    rangeStart: value("omuRangeStart"),
+    rangeEnd: value("omuRangeEnd"),
+    countStart: value("omuCountStart"),
+    occurrences: Number(value("omuOccurrences")),
     teacher: value("omuTeacher")
       ? formatTeacher(value("omuTeacherPrefix"), value("omuTeacher"))
       : "",
@@ -638,7 +745,7 @@ async function saveOmuEntry() {
   const normalized = normalizeOmu({ enabled: true, entries: [candidate] }).entries[0];
   if (!normalized) {
     showModal(
-      "Wpisz nazwę, poprawne godziny od–do oraz co najmniej jedną datę, jeśli wybrano konkretne terminy. Daty muszą pasować do dnia tygodnia.",
+      "Wpisz nazwę i poprawne godziny. Daty, zakres oraz liczba spotkań muszą pasować do wybranego dnia tygodnia.",
       true,
     );
     return;
@@ -646,7 +753,7 @@ async function saveOmuEntry() {
   if (
     omuState.entries.some((e) => e.id !== candidate.id && omuEntriesOverlap(e, normalized)) &&
     !(await showModal(
-      "Ten wpis OMU nakłada się godzinami i terminami na inny wpis. Zapisać mimo to?",
+      "Ten moduł nakłada się godzinami i terminami na inny wpis. Zapisać mimo to?",
     ))
   )
     return;
@@ -660,15 +767,15 @@ async function saveOmuEntry() {
   saveState(true);
   renderOmuList();
   closeOmu();
-  announce("Zapisano OMU. Kolejny blok dodasz przyciskiem OMU.");
+  announce("Zapisano moduł obszarowy.");
 }
 async function deleteOmuEntry() {
-  if (!editingOmuId || !(await showModal("Usunąć wybrany wpis OMU?"))) return;
+  if (!editingOmuId || !(await showModal("Usunąć wybrany moduł?"))) return;
   omuState.entries = omuState.entries.filter((e) => e.id !== editingOmuId);
   editingOmuId = null;
   saveState(true);
   selectOmuEntry(null);
-  announce("Usunięto wpis OMU. Możesz go przywrócić przez Cofnij.");
+  announce("Usunięto moduł. Możesz go przywrócić przez Cofnij.");
 }
 function renderOmu() {
   const section = document.getElementById("omuSection");
@@ -680,7 +787,7 @@ function renderOmu() {
   if (!omuState.enabled) return;
   const title = document.createElement("h2");
   title.className = "omu-section-title";
-  title.textContent = "OMU · godziny indywidualne";
+  title.textContent = "Moduły kształcenia obszarowego · godziny indywidualne";
   section.appendChild(title);
   const entries = visibleOmuEntries(displayedDate).sort(
     (a, b) => a.start.localeCompare(b.start) || a.day - b.day || a.block.localeCompare(b.block),
@@ -690,8 +797,8 @@ function renderOmu() {
     empty.className = "omu-empty";
     empty.textContent =
       mode === "edit"
-        ? "Dodaj moduł przyciskiem OMU. Udział w dwóch blokach nie jest wymagany."
-        : "Brak spotkań OMU w tym tygodniu.";
+        ? "Dodaj moduł przyciskiem „Moduły obszarowe”. Udział w dwóch blokach nie jest wymagany."
+        : "Brak spotkań modułów obszarowych w tym tygodniu.";
     section.appendChild(empty);
     return;
   }
@@ -719,7 +826,7 @@ function renderOmu() {
         if (mode === "edit") {
           card.tabIndex = 0;
           card.setAttribute("role", "button");
-          card.setAttribute("aria-label", "Edytuj OMU: " + entry.subject);
+          card.setAttribute("aria-label", "Edytuj moduł obszarowy: " + entry.subject);
           card.onclick = () => openOmu(entry.id);
           card.onkeydown = (e) => {
             if (e.key === "Enter") {
@@ -746,17 +853,7 @@ function renderOmu() {
           entry.remote ? "entry-remote" : entry.other ? "entry-room entry-room-alt" : "entry-room",
           entry.remote ? "ZDALNIE" : entry.room,
         );
-        line(
-          "omu-dates",
-          entry.repeat === "dates"
-            ? (settings.showOmuAlwaysInView
-                ? entry.dates
-                : entry.dates.filter((d) => mode === "edit" || dateOccursThisWeek(d, displayedDate))
-              )
-                .map(displayDate)
-                .join(", ")
-            : "Co tydzień",
-        );
+        line("omu-dates", occurrenceSummary(entry, displayedDate));
         td.appendChild(card);
       }
     }
@@ -777,7 +874,7 @@ function highlightOmu(now) {
       entry.day === now.getDay() - 1 &&
       minutes >= timeMinutes(entry.start) &&
       minutes < timeMinutes(entry.end) &&
-      (entry.repeat === "weekly" || entry.dates.includes(today));
+      entryOccursOnDate(entry, today);
     card.classList.toggle("omu-current", !!active);
   });
 }

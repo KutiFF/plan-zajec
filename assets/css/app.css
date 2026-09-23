@@ -156,7 +156,7 @@ th {
   position: relative;
   width: 100%;
   min-height: 80px;
-  /* PL: Nagłówki nie mogą zostać ściśnięte przez tabelę OMU. EN: The OMU table must not compress the headers. */
+  /* PL: Tabela modułów nie może ściskać nagłówków. EN: The area-module table must not compress headers. */
   flex: 0 0 auto;
   transition: min-height 0.1s;
 }
@@ -1016,6 +1016,11 @@ button {
 }
 .span-two {
   grid-column: 1/-1;
+}
+.recurrence-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 .dialog-actions {
   display: flex;

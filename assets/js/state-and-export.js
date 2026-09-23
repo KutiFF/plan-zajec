@@ -4,6 +4,39 @@ let history = [];
 let historyIndex = -1;
 let isUndoing = false;
 
+// PL: W wydaniach do 1.2.0 moduły były zapisywane osobno w każdym wariancie
+// tygodnia. Łączymy je raz, zachowując wszystkie różne wpisy użytkownika.
+// EN: Until 1.2.0 modules were stored in each week variant. Merge them once
+// while retaining every distinct user entry.
+function legacyAreaModuleKey(entry) {
+  const { id, ...content } = entry;
+  return JSON.stringify(content);
+}
+function migrateLegacyAreaModules(weeks) {
+  const merged = { enabled: false, entries: [] };
+  const seen = new Set();
+  const usedIds = new Set();
+  for (const state of Object.values(weeks || {})) {
+    const legacy = normalizeOmu(state?.omu);
+    merged.enabled ||= legacy.enabled;
+    for (const original of legacy.entries) {
+      const key = legacyAreaModuleKey(original);
+      if (seen.has(key)) continue;
+      const entry = structuredClone(original);
+      if (usedIds.has(entry.id)) entry.id = `${entry.id}-migrated-${merged.entries.length + 1}`;
+      seen.add(key);
+      usedIds.add(entry.id);
+      merged.entries.push(entry);
+    }
+  }
+  return merged;
+}
+function sharedAreaModules(stored, weeks) {
+  return stored?.areaModules
+    ? normalizeOmu(stored.areaModules)
+    : migrateLegacyAreaModules(weeks);
+}
+
 function snapshotState() {
   const clone = tbody.cloneNode(true);
   clearAutoBreaksIn(clone);
@@ -46,11 +79,12 @@ function persistWeeks() {
   localStorage.setItem(
     WEEKS_KEY,
     JSON.stringify({
-      version: "0.9",
+      version: "1.2",
       selected: currentWeek,
       weekMode,
       parityUsed,
       weeks: weekStates,
+      areaModules: structuredClone(omuState),
       settings,
       lastDividedWeek,
     }),
@@ -79,10 +113,10 @@ function saveState(addToHistory = true) {
   }
 }
 
-function loadStateStr(stateStr) {
+function loadStateStr(stateStr, restoreAreaModules = false) {
   try {
     const state = JSON.parse(stateStr);
-    omuState = normalizeOmu(state.omu);
+    if (restoreAreaModules && state.omu) omuState = normalizeOmu(state.omu);
     if (state.table) tbody.innerHTML = state.table;
     tbody
       .querySelectorAll("[contenteditable]")
@@ -160,10 +194,15 @@ function loadState() {
       applySettings();
       fillSettingsForm();
     }
+    omuState = sharedAreaModules(stored, weekStates);
     loadStateStr(JSON.stringify(weekStates[currentWeek]));
   } else {
     const legacy = localStorage.getItem(STORAGE_KEY);
-    if (legacy) loadStateStr(legacy);
+    if (legacy) {
+      const legacyState = JSON.parse(legacy);
+      omuState = normalizeOmu(legacyState.omu);
+      loadStateStr(legacy);
+    }
     else {
       initTable();
       ensureRemoteHeaders(true);
@@ -173,7 +212,7 @@ function loadState() {
     weekStates.odd = blankStateFrom(weekStates.common, "odd");
   }
   updateWeekUI();
-  history = [JSON.stringify(weekStates[currentWeek])];
+  history = [JSON.stringify(snapshotState())];
   historyIndex = 0;
   persistWeeks();
 }
@@ -272,7 +311,7 @@ function toggleWeekMode(enabled) {
   currentWeek = enabled ? lastDividedWeek : "common";
   loadStateStr(JSON.stringify(weekStates[currentWeek]));
   updateWeekUI();
-  history = [JSON.stringify(weekStates[currentWeek])];
+  history = [JSON.stringify(snapshotState())];
   historyIndex = 0;
   persistWeeks();
   if (firstUse && stateHasLessons(weekStates.common)) openBankCopy();
@@ -307,7 +346,7 @@ async function copyWeeklyBank() {
   closeBankCopy();
   loadStateStr(JSON.stringify(weekStates[currentWeek]));
   updateWeekUI();
-  history = [JSON.stringify(weekStates[currentWeek])];
+  history = [JSON.stringify(snapshotState())];
   historyIndex = 0;
   persistWeeks();
   announce("Skopiowano plan. Dalsze zmiany dotyczą tylko wybranego tygodnia.");
@@ -321,7 +360,7 @@ function switchWeek(next) {
   lastDividedWeek = next;
   loadStateStr(JSON.stringify(weekStates[next]));
   updateWeekUI();
-  history = [JSON.stringify(weekStates[next])];
+  history = [JSON.stringify(snapshotState())];
   historyIndex = 0;
   persistWeeks();
 }
@@ -331,7 +370,7 @@ function undo() {
   if (historyIndex > 0) {
     isUndoing = true;
     historyIndex--;
-    loadStateStr(history[historyIndex]);
+    loadStateStr(history[historyIndex], true);
     weekStates[currentWeek] = JSON.parse(history[historyIndex]);
     persistWeeks();
     setTimeout(() => (isUndoing = false), 50);
@@ -343,7 +382,7 @@ function redo() {
   if (historyIndex < history.length - 1) {
     isUndoing = true;
     historyIndex++;
-    loadStateStr(history[historyIndex]);
+    loadStateStr(history[historyIndex], true);
     weekStates[currentWeek] = JSON.parse(history[historyIndex]);
     persistWeeks();
     setTimeout(() => (isUndoing = false), 50);
@@ -527,12 +566,14 @@ function exportJSON() {
           weekMode,
           parityUsed,
           weeks: structuredClone(weekStates),
+          areaModules: structuredClone(omuState),
           lastDividedWeek,
         }
       : {
           version: APP_VERSION,
           exportScope: scope,
           state: structuredClone(weekStates[scope]),
+          areaModules: structuredClone(omuState),
         };
   if (includeSettings) {
     content.settings = structuredClone(settings);
@@ -555,7 +596,7 @@ function validateState(state) {
     throw new Error("Nieprawidłowa liczba wierszy");
   const clean = { ...state, omu: normalizeOmu(state.omu) };
   if (Array.isArray(state.omu?.entries) && clean.omu.entries.length !== state.omu.entries.length)
-    throw new Error("Nieprawidłowe dane OMU");
+    throw new Error("Nieprawidłowe dane modułów obszarowych");
   for (const key of ["table", "thead", "headerLeftHTML", "headerRightHTML", "headerWeekHTML"]) {
     if (typeof clean[key] === "string") clean[key] = sanitizeMarkup(clean[key]);
   }
@@ -628,6 +669,7 @@ function importJSON(event) {
         importedParityUsed = false;
       }
       weekStates = weeks;
+      omuState = sharedAreaModules(data, weeks);
       weekMode = importedWeekMode;
       parityUsed = importedParityUsed;
       currentWeek = importedCurrentWeek;
@@ -654,7 +696,7 @@ function importJSON(event) {
       fillSettingsForm();
       loadStateStr(JSON.stringify(weekStates[currentWeek]));
       updateWeekUI();
-      history = [JSON.stringify(weekStates[currentWeek])];
+      history = [JSON.stringify(snapshotState())];
       historyIndex = 0;
       persistWeeks();
       document.getElementById("welcomeModal").classList.replace("flex", "hidden");

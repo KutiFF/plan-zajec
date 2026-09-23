@@ -173,13 +173,17 @@ function dayLessons(day, date) {
   const dateKey = localDateString(date);
   for (const entry of visibleOmuEntries(date)) {
     if (entry.day !== day) continue;
-    const otherDate = entry.repeat === "dates" && !entry.dates.includes(dateKey);
+    const otherDate = !entryOccursOnDate(entry, dateKey);
     if (otherDate && !settings.showOmuAlwaysInView) continue;
     entries.push({
       start: entry.start,
       end: entry.end,
       subject: entry.subject,
-      type: [`OMU · blok ${entry.block}`, entry.group ? `Grupa ${entry.group}` : "", entry.note]
+      type: [
+        `Moduł obszarowy · blok ${entry.block}`,
+        entry.group ? `Grupa ${entry.group}` : "",
+        entry.note,
+      ]
         .filter(Boolean)
         .join(" · "),
       teacher: entry.teacher,
@@ -213,7 +217,8 @@ function mobileLessonCard(lesson, state) {
   line(lesson.type, "mobile-lesson-kind");
   line(lesson.teacher);
   line(lesson.remote ? "Zdalnie" : lesson.room);
-  if (lesson.otherDate) line("OMU · inny termin (pokazano wszystkie OMU)", "mobile-lesson-kind");
+  if (lesson.otherDate)
+    line("Moduł obszarowy · inny termin (pokazano wszystkie moduły)", "mobile-lesson-kind");
   if (state === "current") line("Teraz", "mobile-lesson-kind");
   if (state === "next") line("Następne zajęcia", "mobile-lesson-kind");
   card.append(time, body);

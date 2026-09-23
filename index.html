@@ -189,7 +189,7 @@
                 <div class="setting-note">Dopasowanie reaguje na każdą zmianę planu.</div>
                 <label class="setting-check"
                   ><input type="checkbox" id="setOmuEnabled" onchange="toggleOmu(this.checked)" />
-                  OMU w tym planie</label
+                  Włącz moduły obszarowe</label
                 >
                 <label class="setting-check"
                   ><input
@@ -199,9 +199,9 @@
                       updateSetting('showOmuAlwaysInView', this.checked)
                     "
                   />
-                  W podglądzie zawsze pokazuj OMU</label
+                  W podglądzie zawsze pokazuj moduły</label
                 >
-                <button class="ui-button full-width" onclick="openOmu()">Ustaw bloki OMU</button>
+                <button class="ui-button full-width" onclick="openOmu()">Ustaw moduły obszarowe</button>
                 <hr />
                 <label
                   >Tryb po otwarciu<select
@@ -325,7 +325,7 @@
           <button id="copyWeeklyButton" class="ui-button hidden" onclick="openBankCopy()">
             Skopiuj plan tygodniowy
           </button>
-          <button class="ui-button" onclick="openOmu()">OMU</button>
+          <button class="ui-button" onclick="openOmu()">Moduły obszarowe</button>
           <label class="inline-check toolbar-right"
             ><input
               id="autoFitToggle"
@@ -402,7 +402,7 @@
               type="checkbox"
               onchange="updateSetting('showOmuAlwaysInView', this.checked)"
             />
-            Pokaż wszystkie OMU</label
+            Pokaż wszystkie moduły</label
           >
         </div>
         <!-- PL: Formatowanie komórek planu. EN: Schedule-cell formatting. -->
@@ -961,7 +961,7 @@
                 <section
                   id="omuSection"
                   class="hidden"
-                  aria-label="Otwarte moduły uniwersyteckie"
+                  aria-label="Moduły kształcenia obszarowego"
                 ></section>
               </div>
             </div>
@@ -1387,11 +1387,11 @@
           </p>
         </details>
         <details>
-          <summary>Jak dodać i sprawdzić OMU?</summary>
+          <summary>Jak dodać i sprawdzić moduły obszarowe?</summary>
           <p class="setting-note">
-            Otwórz OMU, wybierz blok, dzień i godziny, a następnie ustaw powtarzanie co tydzień albo
-            konkretne daty. W podglądzie domyślnie widzisz OMU właściwe dla wybranego tygodnia; w
-            Ustawieniach możesz włączyć stałe pokazywanie wszystkich OMU.
+            Otwórz Moduły obszarowe, wybierz blok, dzień i godziny, a następnie ustaw konkretne daty,
+            cotygodniowy zakres albo liczbę spotkań. Wpis jest wspólny dla tygodni parzystych i
+            nieparzystych, a w podglądzie pokazuje się tylko wtedy, gdy przypada na oglądany tydzień.
           </p>
         </details>
         <details>
@@ -1431,7 +1431,7 @@
             </tr>
             <tr>
               <td>Ctrl+Enter</td>
-              <td>Zapisz formularz zajęć lub OMU</td>
+              <td>Zapisz formularz zajęć lub modułu obszarowego</td>
             </tr>
             <tr>
               <td>Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z</td>
@@ -1533,14 +1533,15 @@
       aria-labelledby="omuTitle"
     >
       <div class="dialog-panel">
-        <h2 id="omuTitle" class="text-lg font-bold">Otwarte moduły uniwersyteckie</h2>
+        <h2 id="omuTitle" class="text-lg font-bold">Moduły kształcenia obszarowego</h2>
         <p class="setting-note" id="omuBankLabel"></p>
         <label class="inline-check"
-          ><input type="checkbox" id="omuEnabled" onchange="toggleOmu(this.checked)" /> Pokaż OMU w
-          tym planie</label
+          ><input type="checkbox" id="omuEnabled" onchange="toggleOmu(this.checked)" /> Włącz moduły
+          obszarowe</label
         >
         <p class="setting-note">
-          Dodaj tyle bloków, ile potrzebujesz. Godziny i daty ustalasz samodzielnie.
+          Wpisy są wspólne dla tygodnia parzystego i nieparzystego. Wybierz pojedyncze daty,
+          cotygodniowy zakres albo liczbę spotkań.
         </p>
         <div id="omuList"></div>
         <form
@@ -1580,10 +1581,28 @@
             /></label>
             <label
               >Terminy<select id="omuRepeat" onchange="updateOmuDateFields()">
-                <option value="weekly">Co tydzień w tym planie</option>
+                <option value="weekly">Co tydzień, bez daty końcowej</option>
+                <option value="range">Co tydzień w zakresie dat</option>
+                <option value="count">Co tydzień — liczba spotkań</option>
                 <option value="dates">Wybrane daty</option>
               </select></label
             >
+            <div id="omuRangeFields" class="span-two recurrence-fields hidden">
+              <label>Od<input id="omuRangeStart" type="date" /></label>
+              <label>Do<input id="omuRangeEnd" type="date" /></label>
+            </div>
+            <div id="omuCountFields" class="span-two recurrence-fields hidden">
+              <label>Pierwsze spotkanie<input id="omuCountStart" type="date" /></label>
+              <label
+                >Liczba spotkań<input
+                  id="omuOccurrences"
+                  type="number"
+                  min="1"
+                  max="150"
+                  step="1"
+                  value="1"
+              /></label>
+            </div>
             <div id="omuDateFields" class="span-two hidden">
               <label for="omuDateInput">Data spotkania</label>
               <div class="toolbar-group">
@@ -1652,7 +1671,7 @@
             >
               Usuń wpis</button
             ><button type="button" class="ui-button" onclick="closeOmu()">Zamknij</button
-            ><button type="submit" class="ui-button primary-button">Zapisz wpis OMU</button>
+            ><button type="submit" class="ui-button primary-button">Zapisz moduł</button>
           </div>
         </form>
       </div>
