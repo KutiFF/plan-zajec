@@ -4,6 +4,39 @@ let history = [];
 let historyIndex = -1;
 let isUndoing = false;
 
+// PL: W wydaniach do 1.2.0 moduły były zapisywane osobno w każdym wariancie
+// tygodnia. Łączymy je raz, zachowując wszystkie różne wpisy użytkownika.
+// EN: Until 1.2.0 modules were stored in each week variant. Merge them once
+// while retaining every distinct user entry.
+function legacyAreaModuleKey(entry) {
+  const { id, ...content } = entry;
+  return JSON.stringify(content);
+}
+function migrateLegacyAreaModules(weeks) {
+  const merged = { enabled: false, entries: [] };
+  const seen = new Set();
+  const usedIds = new Set();
+  for (const state of Object.values(weeks || {})) {
+    const legacy = normalizeOmu(state?.omu);
+    merged.enabled ||= legacy.enabled;
+    for (const original of legacy.entries) {
+      const key = legacyAreaModuleKey(original);
+      if (seen.has(key)) continue;
+      const entry = structuredClone(original);
+      if (usedIds.has(entry.id)) entry.id = `${entry.id}-migrated-${merged.entries.length + 1}`;
+      seen.add(key);
+      usedIds.add(entry.id);
+      merged.entries.push(entry);
+    }
+  }
+  return merged;
+}
+function sharedAreaModules(stored, weeks) {
+  return stored?.areaModules
+    ? normalizeOmu(stored.areaModules)
+    : migrateLegacyAreaModules(weeks);
+}
+
 function snapshotState() {
   const clone = tbody.cloneNode(true);
   clearAutoBreaksIn(clone);
@@ -46,11 +79,12 @@ function persistWeeks() {
   localStorage.setItem(
     WEEKS_KEY,
     JSON.stringify({
-      version: "0.9",
+      version: "1.2",
       selected: currentWeek,
       weekMode,
       parityUsed,
       weeks: weekStates,
+      areaModules: structuredClone(omuState),
       settings,
       lastDividedWeek,
     }),
@@ -79,11 +113,14 @@ function saveState(addToHistory = true) {
   }
 }
 
-function loadStateStr(stateStr) {
+function loadStateStr(stateStr, restoreAreaModules = false) {
   try {
     const state = JSON.parse(stateStr);
-    omuState = normalizeOmu(state.omu);
+    if (restoreAreaModules && state.omu) omuState = normalizeOmu(state.omu);
     if (state.table) tbody.innerHTML = state.table;
+    tbody.querySelectorAll(".entry-meta").forEach((element) => {
+      element.textContent = capitalizeLessonType(element.textContent);
+    });
     tbody
       .querySelectorAll("[contenteditable]")
       .forEach((el) => el.removeAttribute("contenteditable"));
@@ -160,10 +197,15 @@ function loadState() {
       applySettings();
       fillSettingsForm();
     }
+    omuState = sharedAreaModules(stored, weekStates);
     loadStateStr(JSON.stringify(weekStates[currentWeek]));
   } else {
     const legacy = localStorage.getItem(STORAGE_KEY);
-    if (legacy) loadStateStr(legacy);
+    if (legacy) {
+      const legacyState = JSON.parse(legacy);
+      omuState = normalizeOmu(legacyState.omu);
+      loadStateStr(legacy);
+    }
     else {
       initTable();
       ensureRemoteHeaders(true);
@@ -173,7 +215,7 @@ function loadState() {
     weekStates.odd = blankStateFrom(weekStates.common, "odd");
   }
   updateWeekUI();
-  history = [JSON.stringify(weekStates[currentWeek])];
+  history = [JSON.stringify(snapshotState())];
   historyIndex = 0;
   persistWeeks();
 }
@@ -223,7 +265,14 @@ function updateWeekUI() {
   document.getElementById("weekModeToggle").checked = weekMode;
   document.getElementById("weekSelectorWrap").classList.toggle("hidden", !weekMode);
   if (weekMode) document.getElementById("weekSelector").value = currentWeek;
-  document.getElementById("copyWeeklyButton").classList.toggle("hidden", !weekMode);
+  const copyButton = document.getElementById("copyWeeklyButton");
+  copyButton.classList.toggle("hidden", !weekMode);
+  copyButton.textContent =
+    currentWeek === "even"
+      ? "Kopiuj do nieparzystego"
+      : currentWeek === "odd"
+        ? "Kopiuj do parzystego"
+        : "Skopiuj plan tygodniowy";
   syncRemoteDayCheckboxes();
 }
 function setDefaultWeekText(state, text) {
@@ -272,33 +321,63 @@ function toggleWeekMode(enabled) {
   currentWeek = enabled ? lastDividedWeek : "common";
   loadStateStr(JSON.stringify(weekStates[currentWeek]));
   updateWeekUI();
-  history = [JSON.stringify(weekStates[currentWeek])];
+  history = [JSON.stringify(snapshotState())];
   historyIndex = 0;
   persistWeeks();
-  if (firstUse && stateHasLessons(weekStates.common)) openBankCopy();
+  if (firstUse && stateHasLessons(weekStates.common)) openBankCopy("common");
   else if (enabled) announce("Otwarty osobny zapis tygodni parzystych i nieparzystych.");
 }
-function openBankCopy() {
+function openBankCopy(source = currentWeek) {
   if (!weekMode) return;
-  document.getElementById("bankCopyTarget").value = "both";
-  document.getElementById("bankCopyModal").classList.replace("hidden", "flex");
+  const target = document.getElementById("bankCopyTarget");
+  const modal = document.getElementById("bankCopyModal");
+  const title = document.getElementById("bankCopyTitle");
+  const description = document.getElementById("bankCopyDescription");
+  modal.dataset.source = source;
+  if (source === "common") {
+    title.textContent = "Skopiuj plan tygodniowy";
+    description.textContent =
+      "Plan tygodniowy i plan z podziałem mają oddzielne zapisy. Wybierz, gdzie skopiować zajęcia. Oryginał pozostanie w planie tygodniowym.";
+    target.replaceChildren(
+      new Option("Obu tygodni", "both"),
+      new Option("Tygodnia parzystego", "even"),
+      new Option("Tygodnia nieparzystego", "odd"),
+    );
+  } else {
+    const sourceLabel = source === "even" ? "parzystego" : "nieparzystego";
+    const targetWeek = source === "even" ? "odd" : "even";
+    const targetLabel = targetWeek === "even" ? "parzystego" : "nieparzystego";
+    title.textContent = "Skopiuj tydzień " + sourceLabel;
+    description.textContent =
+      "Skopiuj zajęcia z tygodnia " +
+      sourceLabel +
+      " do tygodnia " +
+      targetLabel +
+      ". Później możesz zmienić tylko różniące się wpisy.";
+    target.replaceChildren(new Option("Tygodnia " + targetLabel, targetWeek));
+  }
+  modal.classList.replace("hidden", "flex");
 }
 function closeBankCopy() {
-  document.getElementById("bankCopyModal").classList.replace("flex", "hidden");
+  const modal = document.getElementById("bankCopyModal");
+  delete modal.dataset.source;
+  modal.classList.replace("flex", "hidden");
 }
 async function copyWeeklyBank() {
+  const modal = document.getElementById("bankCopyModal");
+  const source = modal.dataset.source || currentWeek;
   const value = document.getElementById("bankCopyTarget").value;
-  const targets = value === "both" ? ["even", "odd"] : [value];
+  const targets = source === "common" && value === "both" ? ["even", "odd"] : [value];
   if (targets.some((key) => stateHasLessons(weekStates[key]))) {
     if (
       !(await showModal(
-        "Zastąpić zajęcia w wybranych tygodniach kopią planu tygodniowego? Plan tygodniowy pozostanie zapisany.",
+        "Zastąpić zajęcia w wybranych tygodniach kopią? Plan źródłowy pozostanie zapisany.",
       ))
     )
       return;
   }
   for (const key of targets) {
-    weekStates[key] = structuredClone(weekStates.common);
+    weekStates[key] = structuredClone(weekStates[source]);
     setDefaultWeekText(
       weekStates[key],
       key === "even" ? "Tydzień parzysty" : "Tydzień nieparzysty",
@@ -307,7 +386,7 @@ async function copyWeeklyBank() {
   closeBankCopy();
   loadStateStr(JSON.stringify(weekStates[currentWeek]));
   updateWeekUI();
-  history = [JSON.stringify(weekStates[currentWeek])];
+  history = [JSON.stringify(snapshotState())];
   historyIndex = 0;
   persistWeeks();
   announce("Skopiowano plan. Dalsze zmiany dotyczą tylko wybranego tygodnia.");
@@ -321,7 +400,7 @@ function switchWeek(next) {
   lastDividedWeek = next;
   loadStateStr(JSON.stringify(weekStates[next]));
   updateWeekUI();
-  history = [JSON.stringify(weekStates[next])];
+  history = [JSON.stringify(snapshotState())];
   historyIndex = 0;
   persistWeeks();
 }
@@ -331,7 +410,7 @@ function undo() {
   if (historyIndex > 0) {
     isUndoing = true;
     historyIndex--;
-    loadStateStr(history[historyIndex]);
+    loadStateStr(history[historyIndex], true);
     weekStates[currentWeek] = JSON.parse(history[historyIndex]);
     persistWeeks();
     setTimeout(() => (isUndoing = false), 50);
@@ -343,7 +422,7 @@ function redo() {
   if (historyIndex < history.length - 1) {
     isUndoing = true;
     historyIndex++;
-    loadStateStr(history[historyIndex]);
+    loadStateStr(history[historyIndex], true);
     weekStates[currentWeek] = JSON.parse(history[historyIndex]);
     persistWeeks();
     setTimeout(() => (isUndoing = false), 50);
@@ -354,6 +433,7 @@ document.addEventListener("keydown", function (e) {
   if (e.key === "Escape") {
     for (const [id, close] of [
       ["backupModal", closeBackupExport],
+      ["printOptionsModal", closePrintOptions],
       ["bankCopyModal", closeBankCopy],
       ["omuModal", closeOmu],
       ["helpModal", closeHelp],
@@ -370,8 +450,7 @@ document.addEventListener("keydown", function (e) {
     }
     closeAllCellMenus();
     closeSettings(false);
-    document.getElementById("optionsDropdown").classList.add("hidden");
-    document.querySelector(".export-button").setAttribute("aria-expanded", "false");
+    closeOptionsDropdown();
     return;
   }
   if (e.key === "F1") {
@@ -405,6 +484,7 @@ document.addEventListener("keydown", function (e) {
     "helpModal",
     "customModal",
     "backupModal",
+    "printOptionsModal",
     "bankCopyModal",
     "omuModal",
   ].some((id) => !document.getElementById(id).classList.contains("hidden"));
@@ -421,7 +501,7 @@ document.addEventListener("keydown", function (e) {
   }
   if (e.ctrlKey && e.key.toLowerCase() === "p") {
     e.preventDefault();
-    exportToPDF();
+    openPrintOptions();
     return;
   }
   const typing = e.target.closest("input, textarea, select") || e.target.isContentEditable;
@@ -505,8 +585,7 @@ function openBackupExport() {
     "Aktualnie otwarty — " + currentLabel;
   document.getElementById("backupScope").value = "current";
   document.getElementById("backupIncludeSettings").checked = true;
-  document.getElementById("optionsDropdown").classList.add("hidden");
-  document.querySelector(".export-button").setAttribute("aria-expanded", "false");
+  closeOptionsDropdown();
   document.getElementById("backupModal").classList.replace("hidden", "flex");
   document.getElementById("backupScope").focus();
 }
@@ -527,12 +606,14 @@ function exportJSON() {
           weekMode,
           parityUsed,
           weeks: structuredClone(weekStates),
+          areaModules: structuredClone(omuState),
           lastDividedWeek,
         }
       : {
           version: APP_VERSION,
           exportScope: scope,
           state: structuredClone(weekStates[scope]),
+          areaModules: structuredClone(omuState),
         };
   if (includeSettings) {
     content.settings = structuredClone(settings);
@@ -555,7 +636,7 @@ function validateState(state) {
     throw new Error("Nieprawidłowa liczba wierszy");
   const clean = { ...state, omu: normalizeOmu(state.omu) };
   if (Array.isArray(state.omu?.entries) && clean.omu.entries.length !== state.omu.entries.length)
-    throw new Error("Nieprawidłowe dane OMU");
+    throw new Error("Nieprawidłowe dane modułów obszarowych");
   for (const key of ["table", "thead", "headerLeftHTML", "headerRightHTML", "headerWeekHTML"]) {
     if (typeof clean[key] === "string") clean[key] = sanitizeMarkup(clean[key]);
   }
@@ -628,6 +709,7 @@ function importJSON(event) {
         importedParityUsed = false;
       }
       weekStates = weeks;
+      omuState = sharedAreaModules(data, weeks);
       weekMode = importedWeekMode;
       parityUsed = importedParityUsed;
       currentWeek = importedCurrentWeek;
@@ -654,7 +736,7 @@ function importJSON(event) {
       fillSettingsForm();
       loadStateStr(JSON.stringify(weekStates[currentWeek]));
       updateWeekUI();
-      history = [JSON.stringify(weekStates[currentWeek])];
+      history = [JSON.stringify(snapshotState())];
       historyIndex = 0;
       persistWeeks();
       document.getElementById("welcomeModal").classList.replace("flex", "hidden");
@@ -667,27 +749,96 @@ function importJSON(event) {
   };
   reader.readAsText(file);
   event.target.value = "";
-  document.getElementById("optionsDropdown").classList.add("hidden");
+  closeOptionsDropdown();
 }
-function exportToPDF() {
+let pdfExportState = null;
+function openPrintOptions() {
   if (usesMobileLayout() && !document.body.classList.contains("mobile-previewing")) {
     openMobileDocumentPreview();
     return;
   }
+  closeOptionsDropdown();
+  document.getElementById("printAllModules").checked = true;
+  document.getElementById("printWeekScope").value = "current";
+  document.getElementById("printWeekScopeWrap").classList.toggle("hidden", !weekMode);
+  document.getElementById("printTwoFilesNote").classList.toggle("hidden", !weekMode);
+  document.getElementById("printOptionsModal").classList.replace("hidden", "flex");
+  requestAnimationFrame(() => document.getElementById("printAllModules").focus());
+}
+function closePrintOptions() {
+  document.getElementById("printOptionsModal").classList.replace("flex", "hidden");
+}
+function printDateForWeek(base, week) {
+  if (!weekMode || parityForDate(base) === week) return base;
+  return addDays(base, 7);
+}
+function preparePrintVariant(item) {
+  currentWeek = item.week;
+  browsedDate = item.date ? localDateString(item.date) : browsedDate;
+  loadStateStr(JSON.stringify(weekStates[currentWeek]));
+  updateWeekUI();
+  renderOmu();
   saveState(false);
   compactColumns();
   updateHeaderZoneHeight();
-  if (settings.autoFit) autoFitToPage();
-  document.getElementById("optionsDropdown").classList.add("hidden");
+  autoFitToPage();
   closeAllCellMenus();
+}
+function restoreAfterPdfExport() {
+  if (!pdfExportState) return;
+  const { originalWeek, originalDate, originalTitle } = pdfExportState;
+  currentWeek = originalWeek;
+  browsedDate = originalDate;
+  exportShowAllModules = false;
+  document.title = originalTitle;
+  loadStateStr(JSON.stringify(weekStates[currentWeek]));
+  updateWeekUI();
+  renderOmu();
+  refreshTemporalView();
+  pdfExportState = null;
+  requestAnimationFrame(resizePreview);
+}
+function printNextPdfVariant() {
+  if (!pdfExportState?.queue.length) {
+    restoreAfterPdfExport();
+    return;
+  }
+  const item = pdfExportState.queue.shift();
+  preparePrintVariant(item);
   if (sheetOverflows()) {
+    restoreAfterPdfExport();
     showModal(
-      "Plan wykracza poza kartkę A4. Włącz dopasowanie do A4 w ustawieniach lub skróć treść przed zapisem PDF.",
+      "Plan zawiera zbyt dużo treści, aby zmieścić ją czytelnie na jednej kartce A4. Skróć wpisy lub zmniejsz wysokość wierszy w ustawieniach.",
       true,
     );
     return;
   }
+  document.title =
+    pdfExportState.originalTitle +
+    (weekMode ? ` — tydzień ${item.week === "even" ? "parzysty" : "nieparzysty"}` : "");
+  let continued = false;
+  const next = () => {
+    if (continued) return;
+    continued = true;
+    window.removeEventListener("afterprint", next);
+    setTimeout(printNextPdfVariant, 150);
+  };
+  window.addEventListener("afterprint", next, { once: true });
   // PL: Natywny wydruk zachowuje HTML oraz wektorowy tekst i linie dokumentu.
   // EN: Native printing preserves the document HTML, vector text, and lines.
   window.print();
+}
+function startPdfExport() {
+  const baseDate = viewedDate();
+  const scope = document.getElementById("printWeekScope").value;
+  const variants = weekMode && scope === "both" ? ["even", "odd"] : [currentWeek];
+  exportShowAllModules = document.getElementById("printAllModules").checked;
+  pdfExportState = {
+    originalWeek: currentWeek,
+    originalDate: browsedDate,
+    originalTitle: document.title,
+    queue: variants.map((week) => ({ week, date: printDateForWeek(baseDate, week) })),
+  };
+  closePrintOptions();
+  printNextPdfVariant();
 }

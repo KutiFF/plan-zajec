@@ -18,7 +18,7 @@ Lokalna aplikacja do układania, przeglądania i eksportowania planu zajęć. Ni
         ├── editor.js                  # Tabela i edycja / Table and editing
         ├── state-and-export.js        # Zapis, historia, import i eksport / State, history, import, export
         ├── text-formatting.js         # Formatowanie komórek / Cell formatting
-        ├── schedule-and-settings.js   # Tygodnie, OMU i ustawienia / Weeks, OMU, settings
+        ├── schedule-and-settings.js   # Tygodnie, moduły obszarowe i ustawienia / Weeks, area modules, settings
         └── theme-preview-bootstrap.js # Motyw, podgląd mobilny i start / Theme, mobile preview, bootstrap
 ```
 

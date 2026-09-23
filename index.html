@@ -6,7 +6,7 @@
     <title>Twój plan zajęć</title>
     <link rel="icon" type="image/png" href="app-icon.png" />
     <link rel="apple-touch-icon" href="app-icon.png" />
-    <link rel="stylesheet" href="assets/css/app.css" />
+    <link rel="stylesheet" href="assets/css/app.css?app-shell" />
   </head>
   <body>
     <header class="app-header no-print">
@@ -111,14 +111,18 @@
             </button>
             <button id="modeButton" onclick="toggleMode()" class="ui-button">Podgląd</button>
             <div class="relative">
-              <button onclick="toggleOptionsDropdown(this)" class="ui-button export-button">
+              <button
+                onclick="toggleOptionsDropdown(this)"
+                class="ui-button export-button export-menu-trigger"
+                aria-expanded="false"
+              >
                 Eksport ▾
               </button>
               <div id="optionsDropdown" class="hidden absolute">
                 <button onclick="openMobileDocumentPreview()" class="mobile-export-preview">
                   Podgląd A4 i zapis PDF
                 </button>
-                <button onclick="exportToPDF()" class="pdf-export-action">
+                <button onclick="openPrintOptions()" class="pdf-export-action">
                   Drukuj / zapisz PDF
                 </button>
                 <button onclick="openBackupExport()">Pobierz kopię planu (.json)</button>
@@ -181,15 +185,18 @@
                 <label class="setting-check"
                   ><input
                     type="checkbox"
-                    id="setAutoFit"
-                    onchange="updateSetting('autoFit', this.checked)"
+                    id="setSmartEntrySuggestions"
+                    onchange="updateSetting('smartEntrySuggestions', this.checked)"
                   />
-                  Automatycznie dopasowuj do A4</label
+                  Podpowiadaj zapisane przedmioty i prowadzących</label
                 >
-                <div class="setting-note">Dopasowanie reaguje na każdą zmianę planu.</div>
+                <div class="setting-note">
+                  Wybranie znanego prowadzącego uzupełnia jego tytuł. Przedmiot nie zmienia
+                  prowadzącego.
+                </div>
                 <label class="setting-check"
                   ><input type="checkbox" id="setOmuEnabled" onchange="toggleOmu(this.checked)" />
-                  OMU w tym planie</label
+                  Włącz moduły obszarowe</label
                 >
                 <label class="setting-check"
                   ><input
@@ -199,9 +206,17 @@
                       updateSetting('showOmuAlwaysInView', this.checked)
                     "
                   />
-                  W podglądzie zawsze pokazuj OMU</label
+                  W podglądzie zawsze pokazuj moduły</label
                 >
-                <button class="ui-button full-width" onclick="openOmu()">Ustaw bloki OMU</button>
+                <label class="setting-check"
+                  ><input
+                    type="checkbox"
+                    id="setShowMobileBreaks"
+                    onchange="updateSetting('showBreaksInMobilePreview', this.checked)"
+                  />
+                  Pokazuj przerwy w podglądzie mobilnym</label
+                >
+                <button class="ui-button full-width" onclick="openOmu()">Ustaw moduły obszarowe</button>
                 <hr />
                 <label
                   >Tryb po otwarciu<select
@@ -306,6 +321,13 @@
             </div>
           </div>
         </div>
+        <div class="toolbar-row edit-only module-toolbar">
+          <div>
+            <strong>Moduły obszarowe</strong>
+            <small>Dodawaj i edytuj terminy wspólne dla obu wariantów tygodnia.</small>
+          </div>
+          <button class="ui-button" onclick="openOmu()">Zarządzaj modułami</button>
+        </div>
         <div class="toolbar-row edit-only toolbar-secondary">
           <label class="inline-check"
             ><input type="checkbox" id="weekModeToggle" onchange="toggleWeekMode(this.checked)" />
@@ -324,24 +346,6 @@
           >
           <button id="copyWeeklyButton" class="ui-button hidden" onclick="openBankCopy()">
             Skopiuj plan tygodniowy
-          </button>
-          <button class="ui-button" onclick="openOmu()">OMU</button>
-          <label class="inline-check toolbar-right"
-            ><input
-              id="autoFitToggle"
-              type="checkbox"
-              onchange="updateSetting('autoFit', this.checked)"
-            />
-            Dopasowanie do A4</label
-          >
-          <span id="autofitBadge" class="hidden fit-badge"></span
-          ><button
-            id="autofitResetBtn"
-            onclick="resetAutoFit()"
-            class="hidden ui-button"
-            title="Wyłącz dopasowanie i przywróć 100%"
-          >
-            100%
           </button>
         </div>
         <div id="remoteDays" class="edit-only toolbar-group remote-days">
@@ -402,9 +406,10 @@
               type="checkbox"
               onchange="updateSetting('showOmuAlwaysInView', this.checked)"
             />
-            Pokaż wszystkie OMU</label
+            Pokaż wszystkie moduły</label
           >
         </div>
+        <div id="desktopTimeStatus" class="desktop-time-status view-only hidden" role="status"></div>
         <!-- PL: Formatowanie komórek planu. EN: Schedule-cell formatting. -->
         <div class="hidden" aria-hidden="true">
           <!-- PL: Podstawowe formatowanie tekstu. EN: Basic text formatting. -->
@@ -878,6 +883,7 @@
           </div>
           <div id="mobileOverviewDate" class="mobile-overview-date" aria-live="polite"></div>
           <p id="mobileOverviewNote" class="mobile-overview-note"></p>
+          <p id="mobileTimeStatus" class="mobile-time-status hidden" role="status"></p>
           <div id="mobileOverviewList" class="mobile-overview-list" role="tabpanel"></div>
         </section>
         <div class="preview-shell" id="previewShell">
@@ -961,7 +967,7 @@
                 <section
                   id="omuSection"
                   class="hidden"
-                  aria-label="Otwarte moduły uniwersyteckie"
+                  aria-label="Moduły kształcenia obszarowego"
                 ></section>
               </div>
             </div>
@@ -987,6 +993,17 @@
       >
         <span aria-hidden="true"></span>Podgląd
       </button>
+      <button
+        type="button"
+        id="mobileExportTab"
+        class="export-menu-trigger"
+        onclick="toggleOptionsDropdown(this)"
+        aria-label="Otwórz eksport"
+        aria-expanded="false"
+        aria-controls="optionsDropdown"
+      >
+        <span aria-hidden="true"></span>Eksport
+      </button>
     </nav>
 
     <div id="saveStatus" class="no-print" role="status" aria-live="polite"></div>
@@ -1009,6 +1026,7 @@
         <input
           id="entrySubject"
           type="text"
+          list="subjectSuggestions"
           placeholder="np. Zarządzanie publiczne"
           class="w-full border rounded px-2 py-1.5 text-sm mb-2 outline-none focus:ring-1 focus:ring-blue-400"
         />
@@ -1105,44 +1123,63 @@
           id="entryType"
           type="text"
           list="entryTypeOptions"
-          placeholder="np. wykład, ćwiczenia, konwersatorium"
+          placeholder="np. Wykład, Ćwiczenia, Konwersatorium"
           class="w-full border rounded px-2 py-1.5 text-sm mb-2 outline-none focus:ring-1 focus:ring-blue-400"
         />
         <datalist id="entryTypeOptions">
-          <option value="wykład"></option>
-          <option value="ćwiczenia"></option>
-          <option value="konwersatorium"></option>
-          <option value="lektorat"></option>
-          <option value="ścieżka dydaktyczna"></option>
+          <option value="Wykład"></option>
+          <option value="Ćwiczenia"></option>
+          <option value="Konwersatorium"></option>
+          <option value="Lektorat"></option>
+          <option value="Ścieżka dydaktyczna"></option>
         </datalist>
+        <div id="entryGroupField">
+          <label class="block text-xs font-medium text-gray-600 mb-1" for="entryGroup"
+            >Numer grupy (opcjonalnie)</label
+          >
+          <input
+            id="entryGroup"
+            type="text"
+            maxlength="80"
+            placeholder="np. 2"
+            class="w-full border rounded px-2 py-1.5 text-sm mb-2 outline-none focus:ring-1 focus:ring-blue-400"
+          />
+        </div>
 
-        <label class="block text-xs font-medium text-gray-600 mb-1" for="entryTeacherPrefix"
-          >Tytuł prowadzącego</label
-        >
-        <select
-          id="entryTeacherPrefix"
-          class="w-full border rounded px-2 py-1.5 text-sm mb-2"
-          onchange="updateTeacherPreview()"
-        >
-          <option value="dr" selected>dr (domyślnie)</option>
-          <option value="mgr">mgr</option>
-          <option value="dr hab.">dr hab.</option>
-          <option value="prof.">prof.</option>
-          <option value="prof. dr hab.">prof. dr hab.</option>
-          <option value="prof. UŚ">prof. UŚ</option>
-          <option value="prof. UŚ dr">prof. UŚ dr</option>
-          <option value="prof. UŚ dr hab.">prof. UŚ dr hab.</option>
-          <option value="">Bez tytułu</option>
-        </select>
+        <div class="teacher-title-row">
+          <label class="block text-xs font-medium text-gray-600 mb-1" for="entryTeacherPrefix"
+            >Tytuł prowadzącego<select
+              id="entryTeacherPrefix"
+              class="w-full border rounded px-2 py-1.5 text-sm"
+              onchange="updateTeacherPreview()"
+            >
+              <option value="" selected>Wybierz tytuł</option>
+              <option value="mgr">mgr</option>
+              <option value="dr">dr</option>
+              <option value="dr hab.">dr hab.</option>
+              <option value="prof. dr hab.">prof. dr hab.</option>
+              <option value="prof.">prof.</option>
+            </select></label
+          >
+          <label class="inline-check teacher-university-check"
+            ><input
+              id="entryTeacherUniversity"
+              type="checkbox"
+              onchange="updateTeacherPreview()"
+            />
+            prof. UŚ</label
+          >
+        </div>
         <label class="block text-xs font-medium text-gray-600 mb-1" for="entryTeacher"
           >Imię i nazwisko prowadzącego *</label
         >
         <input
           id="entryTeacher"
           type="text"
+          list="teacherSuggestions"
           placeholder="np. Robert Radek"
           class="w-full border rounded px-2 py-1.5 text-sm mb-1 outline-none focus:ring-1 focus:ring-blue-400"
-          oninput="updateTeacherPreview()"
+          oninput="handleTeacherSuggestion('entry')"
         />
         <div id="teacherPreview" class="text-xs text-gray-500 mb-2" aria-live="polite"></div>
 
@@ -1381,17 +1418,17 @@
         <details>
           <summary>Nagłówki, A4 i wydruk</summary>
           <p class="setting-note">
-            Nagłówki studiów zmienisz w Ustawieniach. Dopasowanie do A4 reaguje na zmiany planu, a
-            puste dni mogą być zwężane. Motyw aplikacji nie zmienia samego dokumentu: wydruk i PDF
-            pozostają niezależnym, czytelnym planem A4.
+            Nagłówki studiów zmienisz w Ustawieniach. Dokument automatycznie dopasowuje treść do
+            jednej strony A4, a puste dni mogą być zwężane. Motyw aplikacji nie zmienia samego
+            dokumentu: wydruk i PDF pozostają niezależnym, czytelnym planem A4.
           </p>
         </details>
         <details>
-          <summary>Jak dodać i sprawdzić OMU?</summary>
+          <summary>Jak dodać i sprawdzić moduły obszarowe?</summary>
           <p class="setting-note">
-            Otwórz OMU, wybierz blok, dzień i godziny, a następnie ustaw powtarzanie co tydzień albo
-            konkretne daty. W podglądzie domyślnie widzisz OMU właściwe dla wybranego tygodnia; w
-            Ustawieniach możesz włączyć stałe pokazywanie wszystkich OMU.
+            Otwórz Moduły obszarowe, wybierz blok, dzień i godziny, a następnie ustaw konkretne daty,
+            cotygodniowy zakres albo liczbę spotkań. Wpis jest wspólny dla tygodni parzystych i
+            nieparzystych, a w podglądzie pokazuje się tylko wtedy, gdy przypada na oglądany tydzień.
           </p>
         </details>
         <details>
@@ -1431,7 +1468,7 @@
             </tr>
             <tr>
               <td>Ctrl+Enter</td>
-              <td>Zapisz formularz zajęć lub OMU</td>
+              <td>Zapisz formularz zajęć lub modułu obszarowego</td>
             </tr>
             <tr>
               <td>Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z</td>
@@ -1447,7 +1484,7 @@
             </tr>
             <tr>
               <td>Ctrl+P</td>
-              <td>Drukuj lub zapisz PDF</td>
+              <td>Wybierz zawartość, a następnie drukuj lub zapisz PDF</td>
             </tr>
             <tr>
               <td>F1 / Esc</td>
@@ -1469,7 +1506,7 @@
     >
       <div class="dialog-panel">
         <h2 id="bankCopyTitle" class="text-lg font-bold">Skopiuj plan tygodniowy</h2>
-        <p class="setting-note">
+        <p id="bankCopyDescription" class="setting-note">
           Plan tygodniowy i plan z podziałem mają oddzielne zapisy. Wybierz, gdzie skopiować
           zajęcia. Oryginał pozostanie w planie tygodniowym.
         </p>
@@ -1488,6 +1525,47 @@
           </button>
         </div>
       </div>
+    </div>
+    <div
+      id="printOptionsModal"
+      class="dialog-backdrop fixed inset-0 hidden items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="printOptionsTitle"
+      onclick="if (event.target === this) closePrintOptions();"
+    >
+      <form
+        class="dialog-panel"
+        onsubmit="
+          event.preventDefault();
+          startPdfExport();
+        "
+      >
+        <h2 id="printOptionsTitle" class="text-lg font-bold">Drukuj lub zapisz PDF</h2>
+        <p class="setting-note">
+          Przed otwarciem systemowego okna wydruku wybierz zawartość dokumentu.
+        </p>
+        <label class="setting-check"
+          ><input id="printAllModules" type="checkbox" checked /> Pokaż wszystkie moduły
+          obszarowe</label
+        >
+        <div class="setting-note">
+          Domyślnie PDF zawiera pełną listę modułów, również z innych tygodni.
+        </div>
+        <label id="printWeekScopeWrap"
+          >Wariant planu<select id="printWeekScope">
+            <option value="current">Tylko aktualnie oglądany tydzień</option>
+            <option value="both">Dwa osobne PDF-y: parzysty i nieparzysty</option>
+          </select></label
+        >
+        <div id="printTwoFilesNote" class="setting-note">
+          Przy wyborze obu tygodni okno wydruku otworzy się kolejno dwa razy.
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="ui-button" onclick="closePrintOptions()">Anuluj</button
+          ><button type="submit" class="ui-button primary-button">Przejdź do wydruku</button>
+        </div>
+      </form>
     </div>
     <div
       id="backupModal"
@@ -1533,14 +1611,15 @@
       aria-labelledby="omuTitle"
     >
       <div class="dialog-panel">
-        <h2 id="omuTitle" class="text-lg font-bold">Otwarte moduły uniwersyteckie</h2>
+        <h2 id="omuTitle" class="text-lg font-bold">Moduły kształcenia obszarowego</h2>
         <p class="setting-note" id="omuBankLabel"></p>
         <label class="inline-check"
-          ><input type="checkbox" id="omuEnabled" onchange="toggleOmu(this.checked)" /> Pokaż OMU w
-          tym planie</label
+          ><input type="checkbox" id="omuEnabled" onchange="toggleOmu(this.checked)" /> Włącz moduły
+          obszarowe</label
         >
         <p class="setting-note">
-          Dodaj tyle bloków, ile potrzebujesz. Godziny i daty ustalasz samodzielnie.
+          Wpisy są wspólne dla tygodnia parzystego i nieparzystego. Wybierz pojedyncze daty,
+          cotygodniowy zakres albo liczbę spotkań.
         </p>
         <div id="omuList"></div>
         <form
@@ -1571,6 +1650,7 @@
             <label class="span-two"
               >Nazwa modułu *<input
                 id="omuSubject"
+                list="subjectSuggestions"
                 maxlength="200"
                 required
                 placeholder="np. Nauka i sztuka"
@@ -1580,10 +1660,28 @@
             /></label>
             <label
               >Terminy<select id="omuRepeat" onchange="updateOmuDateFields()">
-                <option value="weekly">Co tydzień w tym planie</option>
+                <option value="weekly">Co tydzień, bez daty końcowej</option>
+                <option value="range">Co tydzień w zakresie dat</option>
+                <option value="count">Co tydzień — liczba spotkań</option>
                 <option value="dates">Wybrane daty</option>
               </select></label
             >
+            <div id="omuRangeFields" class="span-two recurrence-fields hidden">
+              <label>Od<input id="omuRangeStart" type="date" /></label>
+              <label>Do<input id="omuRangeEnd" type="date" /></label>
+            </div>
+            <div id="omuCountFields" class="span-two recurrence-fields hidden">
+              <label>Pierwsze spotkanie<input id="omuCountStart" type="date" /></label>
+              <label
+                >Liczba spotkań<input
+                  id="omuOccurrences"
+                  type="number"
+                  min="1"
+                  max="150"
+                  step="1"
+                  value="1"
+              /></label>
+            </div>
             <div id="omuDateFields" class="span-two hidden">
               <label for="omuDateInput">Data spotkania</label>
               <div class="toolbar-group">
@@ -1597,24 +1695,27 @@
               </div>
               <div id="omuDates" class="date-chips"></div>
             </div>
-            <label
-              >Tytuł prowadzącego<select id="omuTeacherPrefix">
-                <option value="dr">dr</option>
-                <option value="mgr">mgr</option>
-                <option value="dr hab.">dr hab.</option>
-                <option value="prof.">prof.</option>
-                <option value="prof. dr hab.">prof. dr hab.</option>
-                <option value="prof. UŚ">prof. UŚ</option>
-                <option value="prof. UŚ dr">prof. UŚ dr</option>
-                <option value="prof. UŚ dr hab.">prof. UŚ dr hab.</option>
-                <option value="">Bez tytułu</option>
-              </select></label
-            >
+            <div class="teacher-title-row">
+              <label
+                >Tytuł prowadzącego<select id="omuTeacherPrefix">
+                  <option value="" selected>Wybierz tytuł</option>
+                  <option value="mgr">mgr</option>
+                  <option value="dr">dr</option>
+                  <option value="dr hab.">dr hab.</option>
+                  <option value="prof. dr hab.">prof. dr hab.</option>
+                  <option value="prof.">prof.</option>
+                </select></label
+              ><label class="inline-check teacher-university-check"
+                ><input id="omuTeacherUniversity" type="checkbox" /> prof. UŚ</label
+              >
+            </div>
             <label
               >Prowadzący (opcjonalnie)<input
                 id="omuTeacher"
+                list="teacherSuggestions"
                 maxlength="180"
                 placeholder="Imię i nazwisko"
+                oninput="handleTeacherSuggestion('omu')"
             /></label>
             <label
               >Forma zajęć<select id="omuPlaceMode" onchange="updateOmuPlaceFields()">
@@ -1652,11 +1753,13 @@
             >
               Usuń wpis</button
             ><button type="button" class="ui-button" onclick="closeOmu()">Zamknij</button
-            ><button type="submit" class="ui-button primary-button">Zapisz wpis OMU</button>
+            ><button type="submit" class="ui-button primary-button">Zapisz moduł</button>
           </div>
         </form>
       </div>
     </div>
+    <datalist id="subjectSuggestions"></datalist>
+    <datalist id="teacherSuggestions"></datalist>
 
     <!-- PL: Wspólny dialog potwierdzenia. EN: Shared confirmation dialog. -->
     <div
@@ -1689,11 +1792,11 @@
         </div>
       </div>
     </div>
-    <script src="assets/js/version.js"></script>
-    <script src="assets/js/editor.js"></script>
-    <script src="assets/js/state-and-export.js"></script>
-    <script src="assets/js/text-formatting.js"></script>
-    <script src="assets/js/schedule-and-settings.js"></script>
-    <script src="assets/js/theme-preview-bootstrap.js"></script>
+    <script src="assets/js/version.js?app-shell"></script>
+    <script src="assets/js/editor.js?app-shell"></script>
+    <script src="assets/js/state-and-export.js?app-shell"></script>
+    <script src="assets/js/text-formatting.js?app-shell"></script>
+    <script src="assets/js/schedule-and-settings.js?app-shell"></script>
+    <script src="assets/js/theme-preview-bootstrap.js?app-shell"></script>
   </body>
 </html>

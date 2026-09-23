@@ -29,6 +29,7 @@ function placeAppActions() {
   exportWrap.querySelector(".export-button").setAttribute("aria-expanded", "false");
   document.getElementById("mobileEditTab").querySelector("span").innerHTML = APP_ICONS.edit;
   document.getElementById("mobileViewTab").querySelector("span").innerHTML = APP_ICONS.view;
+  document.getElementById("mobileExportTab").querySelector("span").innerHTML = APP_ICONS.export;
   document.querySelector(".preview-feedback > span").innerHTML = APP_ICONS.help;
 }
 function isTabletViewport() {
@@ -42,13 +43,9 @@ function syncResponsiveClass() {
   document.documentElement.classList.toggle("mobile-layout", mobile);
   if (!mobile) document.getElementById("settingsBackdrop").classList.add("hidden");
   const exportWrap = document.querySelector("#optionsDropdown")?.parentElement;
-  const host =
-    mobile && !document.body.classList.contains("mobile-previewing")
-      ? document.getElementById(mode === "view" ? "mobileViewExport" : "mobileEditExport")
-      : document.getElementById("documentActions");
+  const host = mobile ? document.body : document.getElementById("documentActions");
   if (exportWrap && host && exportWrap.parentElement !== host) {
-    document.getElementById("optionsDropdown").classList.add("hidden");
-    exportWrap.querySelector(".export-button").setAttribute("aria-expanded", "false");
+    closeOptionsDropdown();
     host.appendChild(exportWrap);
   }
   scheduleMobileEntries();
@@ -185,11 +182,18 @@ function setupCellControls() {
   });
 }
 
+function closeOptionsDropdown() {
+  const dropdown = document.getElementById("optionsDropdown");
+  dropdown.classList.add("hidden");
+  document
+    .querySelectorAll(".export-menu-trigger")
+    .forEach((button) => button.setAttribute("aria-expanded", "false"));
+}
+
 function toggleOptionsDropdown(btn) {
   const dropdown = document.getElementById("optionsDropdown");
   if (!dropdown.classList.contains("hidden")) {
-    dropdown.classList.add("hidden");
-    btn.setAttribute("aria-expanded", "false");
+    closeOptionsDropdown();
     return;
   }
   const rect = btn.getBoundingClientRect();
@@ -198,7 +202,9 @@ function toggleOptionsDropdown(btn) {
   const menuHeight = dropdown.getBoundingClientRect().height;
   dropdown.style.left = `${Math.max(8, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8))}px`;
   dropdown.style.top = `${rect.bottom + 6 + menuHeight > window.innerHeight ? Math.max(8, rect.top - menuHeight - 6) : rect.bottom + 6}px`;
-  btn.setAttribute("aria-expanded", "true");
+  document
+    .querySelectorAll(".export-menu-trigger")
+    .forEach((button) => button.setAttribute("aria-expanded", String(button === btn)));
 }
 
 tbody.addEventListener("click", (e) => {
@@ -353,12 +359,11 @@ document.addEventListener("click", (e) => {
   }
   if (
     !e.target.closest("#optionsDropdown") &&
-    !e.target.closest('button[onclick*="toggleOptionsDropdown"]')
+    !e.target.closest(".export-menu-trigger")
   ) {
     const dropdown = document.getElementById("optionsDropdown");
     if (dropdown && !dropdown.classList.contains("hidden")) {
-      dropdown.classList.add("hidden");
-      document.querySelector(".export-button").setAttribute("aria-expanded", "false");
+      closeOptionsDropdown();
     }
   }
   if (!e.target.closest(".color-dropdown-container")) {
@@ -832,7 +837,7 @@ function scheduleLayout() {
   }, 40);
 }
 function scheduleAutofit() {
-  if (exportInProgress || fitting || !settings.autoFit) return;
+  if (exportInProgress || fitting) return;
   clearTimeout(autofitTimer);
   autofitTimer = setTimeout(autoFitToPage, 80);
 }
@@ -905,7 +910,7 @@ function fitsAtScale(scale) {
 }
 
 function autoFitToPage() {
-  if (exportInProgress || fitting || !settings.autoFit) return;
+  if (exportInProgress || fitting) return;
   fitting = true;
   captureOriginalFontSizes();
 
@@ -933,33 +938,8 @@ function autoFitToPage() {
   fitting = false;
 }
 
-function resetAutoFit() {
-  settings.autoFit = false;
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  fillSettingsForm();
-  document.querySelectorAll("#scheduleBody [data-orig-fs]").forEach((el) => {
-    el.style.fontSize = el.dataset.origFs;
-    delete el.dataset.origFs;
-  });
-  document.documentElement.style.setProperty("--autofit-scale", "1");
-  updateAutofitBadge(1, false);
-  saveState(true);
-}
-
 function updateAutofitBadge(scale, stillOverflows) {
-  const badge = document.getElementById("autofitBadge");
-  const resetBtn = document.getElementById("autofitResetBtn");
-  if (!badge || !resetBtn) return;
-  const pct = Math.round(scale * 100);
-  if (pct >= 100) {
-    badge.classList.add("hidden");
-    resetBtn.classList.add("hidden");
-    return;
-  }
-  badge.textContent = pct + "%" + (stillOverflows ? " ⚠" : "");
-  badge.title = stillOverflows
-    ? "Treść nie mieści się na A4. Skróć wpisy lub zmniejsz wysokość wierszy w ustawieniach."
-    : "Czcionka zmniejszona automatycznie, aby wszystko zmieściło się na jednej stronie.";
-  badge.classList.remove("hidden");
-  resetBtn.classList.remove("hidden");
+  document.documentElement.dataset.a4Fit = stillOverflows
+    ? "overflow"
+    : Math.round(scale * 100).toString();
 }

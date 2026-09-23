@@ -504,43 +504,131 @@ function updateSubjectColorFields() {
   }
   preview.replaceChildren(sample);
 }
+function normalizeTeacherPrefix(value) {
+  const prefix = String(value || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .replaceAll(".", "");
+  const known = {
+    mgr: "mgr",
+    dr: "dr",
+    "dr hab": "dr hab.",
+    prof: "prof.",
+    "prof dr hab": "prof. dr hab.",
+  };
+  if (known[prefix]) return known[prefix];
+  if (/^prof uś dr hab$/.test(prefix)) return "dr hab.";
+  if (/^prof uś dr$/.test(prefix)) return "dr";
+  return "";
+}
 function parseTeacher(value) {
   let name = (value || "").trim().replace(/\s+/g, " ");
-  const hadUniversity = /,?\s*prof\.?\s*UŚ\s*$/i.test(name);
-  if (hadUniversity) name = name.replace(/,?\s*prof\.?\s*UŚ\s*$/i, "").trim();
-  let prefix = "dr";
-  const leading =
-    /^(prof\.?\s*UŚ\s*dr\s*hab\.?|prof\.?\s*UŚ\s*dr\.?|prof\.?\s*dr\s*hab\.?|dr\s*hab\.?|prof\.?\s*UŚ|prof\.?|dr\.?|mgr\.?)\s+/i.exec(
+  let universityProfessor = /,?\s*prof\.?\s*UŚ\s*$/i.test(name);
+  if (universityProfessor) name = name.replace(/,?\s*prof\.?\s*UŚ\s*$/i, "").trim();
+  const legacy = /^prof\.?\s*UŚ(?:\s+(dr(?:\s+hab\.?)?|mgr\.?))?\s+/i.exec(name);
+  let prefix = "";
+  if (legacy) {
+    universityProfessor = true;
+    prefix = normalizeTeacherPrefix(legacy[1]);
+    name = name.slice(legacy[0].length).trim();
+  } else {
+    const leading = /^(prof\.?\s*dr\s*hab\.?|dr\s*hab\.?|prof\.?|dr\.?|mgr\.?)\s+/i.exec(
       name,
     );
-  if (leading) {
-    prefix = leading[1]
-      .replace(/\s+/g, " ")
-      .replace(/^(dr|mgr|prof)(?=\s|$)/i, (m) => m.toLowerCase())
-      .replace(/\bhab\.?/i, "hab.")
-      .replace(/UŚ/i, "UŚ")
-      .trim();
-    name = name.slice(leading[0].length).trim();
+    if (leading) {
+      prefix = normalizeTeacherPrefix(leading[1]);
+      name = name.slice(leading[0].length).trim();
+    }
   }
-  if (hadUniversity && !/^prof\. UŚ/.test(prefix))
-    prefix = "prof. UŚ " + (prefix === "dr" || prefix === "dr hab." ? prefix : "");
-  prefix = prefix
-    .trim()
-    .replace(/^dr\.$/, "dr")
-    .replace(/^mgr\.$/, "mgr")
-    .replace(/^prof(?=\s|$)/, "prof.");
-  return { prefix, name };
+  return { prefix, name, universityProfessor };
 }
-function formatTeacher(prefix, name) {
+function formatTeacher(prefix, name, universityProfessor) {
   const parsed = parseTeacher(name);
-  const chosen = prefix === undefined ? parsed.prefix : prefix;
-  return [chosen, parsed.name].filter(Boolean).join(" ").trim();
+  const chosen = normalizeTeacherPrefix(prefix === undefined ? parsed.prefix : prefix);
+  const base = [chosen, parsed.name].filter(Boolean).join(" ").trim();
+  const university = universityProfessor ?? parsed.universityProfessor;
+  return base + (base && university ? ", prof. UŚ" : "");
 }
 function updateTeacherPreview() {
   const name = document.getElementById("entryTeacher").value;
   document.getElementById("teacherPreview").textContent = name.trim()
-    ? "W planie: " + formatTeacher(document.getElementById("entryTeacherPrefix").value, name)
+    ? "W planie: " +
+      formatTeacher(
+        document.getElementById("entryTeacherPrefix").value,
+        name,
+        document.getElementById("entryTeacherUniversity").checked,
+      )
     : "";
+}
+let teacherSuggestionIndex = new Map();
+function savedEntryFragments() {
+  const fragments = [];
+  for (const state of Object.values(weekStates || {})) {
+    if (!state?.table) continue;
+    const template = document.createElement("template");
+    template.innerHTML = state.table;
+    fragments.push(template.content);
+  }
+  return fragments;
+}
+function refreshEntrySuggestions() {
+  const subjects = new Set();
+  teacherSuggestionIndex = new Map();
+  for (const fragment of savedEntryFragments()) {
+    fragment.querySelectorAll(".entry-subject").forEach((element) => {
+      const subject = element.textContent.trim();
+      if (subject) subjects.add(subject);
+    });
+    fragment.querySelectorAll(".entry-block").forEach((block) => {
+      const parsed = parseTeacher(block.querySelector(".entry-teacher")?.textContent);
+      if (!parsed.name) return;
+      teacherSuggestionIndex.set(parsed.name.toLocaleLowerCase("pl-PL"), parsed);
+    });
+  }
+  for (const entry of omuState.entries) {
+    if (entry.subject) subjects.add(entry.subject);
+    const parsed = parseTeacher(entry.teacher);
+    if (parsed.name)
+      teacherSuggestionIndex.set(parsed.name.toLocaleLowerCase("pl-PL"), parsed);
+  }
+  const subjectList = document.getElementById("subjectSuggestions");
+  const teacherList = document.getElementById("teacherSuggestions");
+  subjectList.replaceChildren(
+    ...[...subjects]
+      .sort((a, b) => a.localeCompare(b, "pl"))
+      .map((value) => new Option(value, value)),
+  );
+  teacherList.replaceChildren(
+    ...[...teacherSuggestionIndex.values()]
+      .sort((a, b) => a.name.localeCompare(b.name, "pl"))
+      .map((teacher) => new Option(teacher.name, teacher.name)),
+  );
+}
+function applyEntrySuggestionPreference() {
+  const enabled = !!settings.smartEntrySuggestions;
+  for (const id of ["entrySubject", "omuSubject"])
+    document.getElementById(id).toggleAttribute("list", enabled);
+  for (const id of ["entryTeacher", "omuTeacher"])
+    document.getElementById(id).toggleAttribute("list", enabled);
+  if (enabled) {
+    document.getElementById("entrySubject").setAttribute("list", "subjectSuggestions");
+    document.getElementById("omuSubject").setAttribute("list", "subjectSuggestions");
+    document.getElementById("entryTeacher").setAttribute("list", "teacherSuggestions");
+    document.getElementById("omuTeacher").setAttribute("list", "teacherSuggestions");
+  }
+}
+function handleTeacherSuggestion(panel) {
+  const teacher = document.getElementById(panel + "Teacher");
+  const match = settings.smartEntrySuggestions
+    ? teacherSuggestionIndex.get(teacher.value.trim().toLocaleLowerCase("pl-PL"))
+    : null;
+  if (match) {
+    document.getElementById(panel + "TeacherPrefix").value = match.prefix;
+    document.getElementById(panel + "TeacherUniversity").checked =
+      match.universityProfessor;
+  }
+  if (panel === "entry") updateTeacherPreview();
 }
 function updateRoomField() {
   const remote = document.getElementById("entryRemote").checked;
@@ -552,6 +640,13 @@ function updateRoomField() {
   document.getElementById("entryRoom").placeholder = other
     ? "np. Bankowa 11B, pokój 213"
     : "np. 147 lub Aula 1";
+}
+function typeUsesGroup(type) {
+  return !/^\s*wykład\b/i.test(type || "");
+}
+function updateEntryGroupField() {
+  const field = document.getElementById("entryGroupField");
+  field.classList.toggle("hidden", !typeUsesGroup(document.getElementById("entryType").value));
 }
 function normalizeRoom(value, other = false) {
   const room = value.trim().replace(/\s+/g, " ");
@@ -569,22 +664,31 @@ function openEntryModal(btn, preferred) {
   activeCell = cell;
   entryModalTarget = resolveEntryTarget(cell, preferred || activePart);
   closeAllCellMenus();
+  refreshEntrySuggestions();
   const entry = entryModalTarget.querySelector(".entry-block");
   const fields = {
     entrySubject: ".entry-subject",
     entryType: ".entry-meta",
+    entryGroup: ".entry-group",
     entryTeacher: ".entry-teacher",
     entryRoom: ".entry-room, .entry-room-alt",
   };
   for (const [id, selector] of Object.entries(fields))
     document.getElementById(id).value = entry?.querySelector(selector)?.textContent || "";
   const teacher = parseTeacher(document.getElementById("entryTeacher").value);
-  const prefix = entry?.dataset.teacherPrefix ?? teacher.prefix;
+  const prefix = normalizeTeacherPrefix(entry?.dataset.teacherPrefix) || teacher.prefix;
   const prefixInput = document.getElementById("entryTeacherPrefix");
   prefixInput.value = [...prefixInput.options].some((option) => option.value === prefix)
     ? prefix
-    : "dr";
+    : "";
+  document.getElementById("entryTeacherUniversity").checked =
+    entry?.dataset.teacherUniversity === "1" ||
+    teacher.universityProfessor ||
+    /prof\.?\s*UŚ/i.test(entry?.dataset.teacherPrefix || "");
   document.getElementById("entryTeacher").value = teacher.name;
+  document.getElementById("entryGroup").value = document
+    .getElementById("entryGroup")
+    .value.replace(/^Grupa\s+/i, "");
   updateTeacherPreview();
   const other = !!entry?.querySelector(".entry-room-alt");
   document.getElementById("entryAltPlace").checked = other;
@@ -597,6 +701,7 @@ function openEntryModal(btn, preferred) {
     : document.querySelectorAll("#scheduleTable thead th")[Number(cell.dataset.col) + 1]?.dataset
         .remote === "1";
   updateRoomField();
+  updateEntryGroupField();
   const palette = entry?.dataset.subjectColor || "auto";
   const radio = document.querySelector(
     `input[name="entrySubjectColor"][value="${["auto", "none", "yellow", "cyan", "pink", "red", "custom"].includes(palette) ? palette : "auto"}"]`,
@@ -632,6 +737,10 @@ function escapeHtmlEntry(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+function capitalizeLessonType(value) {
+  const text = String(value || "").trim();
+  return text ? text.charAt(0).toLocaleUpperCase("pl-PL") + text.slice(1) : "";
+}
 function selectedSubjectStyle(type, palette) {
   if (palette !== "auto") return palette;
   if (/lektorat/i.test(type)) return "red";
@@ -640,10 +749,12 @@ function selectedSubjectStyle(type, palette) {
 }
 async function submitEntryModal() {
   const subject = document.getElementById("entrySubject").value.trim();
-  const type = document.getElementById("entryType").value.trim();
+  const type = capitalizeLessonType(document.getElementById("entryType").value);
+  const group = typeUsesGroup(type) ? document.getElementById("entryGroup").value.trim() : "";
   const teacherName = document.getElementById("entryTeacher").value.trim();
   const teacherPrefix = document.getElementById("entryTeacherPrefix").value;
-  const teacher = formatTeacher(teacherPrefix, teacherName);
+  const teacherUniversity = document.getElementById("entryTeacherUniversity").checked;
+  const teacher = formatTeacher(teacherPrefix, teacherName, teacherUniversity);
   const other = document.getElementById("entryAltPlace").checked;
   const remote = document.getElementById("entryRemote").checked;
   const room = remote ? "" : normalizeRoom(document.getElementById("entryRoom").value, other);
@@ -652,6 +763,10 @@ async function submitEntryModal() {
   const fg = document.getElementById("entrySubjectFg").value;
   if (!subject || !teacherName) {
     showModal("Uzupełnij przedmiot oraz prowadzącego. Sala jest opcjonalna.", true);
+    return;
+  }
+  if (!teacherPrefix) {
+    showModal("Wybierz tytuł prowadzącego.", true);
     return;
   }
   if (!entryModalTarget || !document.contains(entryModalTarget)) {
@@ -678,6 +793,8 @@ async function submitEntryModal() {
     (remote ? "1" : "0") +
     '" data-teacher-prefix="' +
     escapeHtmlEntry(teacherPrefix) +
+    '" data-teacher-university="' +
+    (teacherUniversity ? "1" : "0") +
     '" data-subject-color="' +
     escapeHtmlEntry(palette) +
     '"' +
@@ -690,6 +807,7 @@ async function submitEntryModal() {
     escapeHtmlEntry(subject) +
     "</span></div>" +
     (type ? '<div class="entry-meta">' + escapeHtmlEntry(type) + "</div>" : "") +
+    (group ? '<div class="entry-group">Grupa ' + escapeHtmlEntry(group) + "</div>" : "") +
     '<div class="entry-teacher">' +
     escapeHtmlEntry(teacher) +
     "</div>" +

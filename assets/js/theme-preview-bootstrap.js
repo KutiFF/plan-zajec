@@ -71,8 +71,7 @@ let mobileA4ReturnMode = "edit",
 function openMobileDocumentPreview() {
   mobileA4ReturnMode = mode;
   mobileA4ReturnWeek = mode === "edit" ? currentWeek : null;
-  document.getElementById("optionsDropdown").classList.add("hidden");
-  document.querySelector(".export-button").setAttribute("aria-expanded", "false");
+  closeOptionsDropdown();
   if (mode !== "view") setMode("view");
   toggleMobilePreview(true);
 }
@@ -132,12 +131,17 @@ function cellLessonsForDay(day) {
     seen = new Set();
   for (let row = 0; row < times.length; row++) {
     const cell = scheduleCellForDay(row, day);
-    if (!cell || seen.has(cell) || cell.classList.contains("auto-break")) continue;
+    if (!cell || seen.has(cell)) continue;
     seen.add(cell);
     const startRow = Number(cell.dataset.row);
     const endRow = Math.min(times.length - 1, startRow + cell.rowSpan - 1);
     const start = times[startRow].split("-")[0],
       end = times[endRow].split("-")[1];
+    if (cell.classList.contains("auto-break")) {
+      if (settings.showBreaksInMobilePreview)
+        entries.push({ start, end, subject: "Przerwa", isBreak: true });
+      continue;
+    }
     const parts = [...cell.querySelectorAll(".cell-part")];
     for (const part of parts.length
       ? parts
@@ -148,7 +152,12 @@ function cellLessonsForDay(day) {
           start,
           end,
           subject: block.querySelector(".entry-subject")?.textContent.trim() || "",
-          type: block.querySelector(".entry-meta")?.textContent.trim() || "",
+          type: [
+            capitalizeLessonType(block.querySelector(".entry-meta")?.textContent),
+            block.querySelector(".entry-group")?.textContent.trim() || "",
+          ]
+            .filter(Boolean)
+            .join(" · "),
           teacher: block.querySelector(".entry-teacher")?.textContent.trim() || "",
           room: block.querySelector(".entry-room,.entry-room-alt")?.textContent.trim() || "",
           remote: block.dataset.remote === "1" || !!block.querySelector(".entry-remote"),
@@ -173,13 +182,17 @@ function dayLessons(day, date) {
   const dateKey = localDateString(date);
   for (const entry of visibleOmuEntries(date)) {
     if (entry.day !== day) continue;
-    const otherDate = entry.repeat === "dates" && !entry.dates.includes(dateKey);
+    const otherDate = !entryOccursOnDate(entry, dateKey);
     if (otherDate && !settings.showOmuAlwaysInView) continue;
     entries.push({
       start: entry.start,
       end: entry.end,
       subject: entry.subject,
-      type: [`OMU · blok ${entry.block}`, entry.group ? `Grupa ${entry.group}` : "", entry.note]
+      type: [
+        `Moduł obszarowy · blok ${entry.block}`,
+        entry.group ? `Grupa ${entry.group}` : "",
+        entry.note,
+      ]
         .filter(Boolean)
         .join(" · "),
       teacher: entry.teacher,
@@ -188,14 +201,30 @@ function dayLessons(day, date) {
       otherDate,
     });
   }
-  return entries.sort(
-    (a, b) =>
-      timeMinutes(a.start) - timeMinutes(b.start) || timeMinutes(a.end) - timeMinutes(b.end),
-  );
+  const actualEntries = entries.filter((entry) => !entry.isBreak && !entry.otherDate);
+  const firstStart = actualEntries.length
+    ? Math.min(...actualEntries.map((entry) => timeMinutes(entry.start)))
+    : null;
+  const lastEnd = actualEntries.length
+    ? Math.max(...actualEntries.map((entry) => timeMinutes(entry.end)))
+    : null;
+  return entries
+    .filter(
+      (entry) =>
+        !entry.isBreak ||
+        (firstStart !== null &&
+          timeMinutes(entry.start) >= firstStart &&
+          timeMinutes(entry.end) <= lastEnd),
+    )
+    .sort(
+      (a, b) =>
+        timeMinutes(a.start) - timeMinutes(b.start) || timeMinutes(a.end) - timeMinutes(b.end),
+    );
 }
 function mobileLessonCard(lesson, state) {
   const card = document.createElement("article");
-  card.className = "mobile-lesson" + (state ? " " + state : "");
+  card.className =
+    "mobile-lesson" + (lesson.isBreak ? " break" : "") + (state ? " " + state : "");
   const time = document.createElement("time");
   time.textContent = lesson.start.replace(".", ":") + "–" + lesson.end.replace(".", ":");
   const body = document.createElement("div");
@@ -213,11 +242,55 @@ function mobileLessonCard(lesson, state) {
   line(lesson.type, "mobile-lesson-kind");
   line(lesson.teacher);
   line(lesson.remote ? "Zdalnie" : lesson.room);
-  if (lesson.otherDate) line("OMU · inny termin (pokazano wszystkie OMU)", "mobile-lesson-kind");
-  if (state === "current") line("Teraz", "mobile-lesson-kind");
+  if (lesson.otherDate)
+    line("Moduł obszarowy · inny termin (pokazano wszystkie moduły)", "mobile-lesson-kind");
+  if (state === "current")
+    line(lesson.isBreak ? "Trwa teraz" : "Teraz", "mobile-lesson-kind");
   if (state === "next") line("Następne zajęcia", "mobile-lesson-kind");
   card.append(time, body);
   return card;
+}
+function remainingTimeText(minutes) {
+  const safe = Math.max(0, Math.round(minutes));
+  const hours = Math.floor(safe / 60);
+  const rest = safe % 60;
+  return (
+    [hours ? `${hours} godz.` : "", rest ? `${rest} min` : ""].filter(Boolean).join(" ") ||
+    "mniej niż minutę"
+  );
+}
+function lessonDayTimeStatus(date, lessons, now = new Date()) {
+  if (localDateString(date) !== localDateString(now)) return "";
+  const actual = lessons.filter((lesson) => !lesson.isBreak && !lesson.otherDate);
+  if (!actual.length) return "";
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  const lastEnd = Math.max(...actual.map((lesson) => timeMinutes(lesson.end)));
+  if (minutes >= lastEnd) return "Dzisiejsze zajęcia już się zakończyły.";
+  const current = actual.find(
+    (lesson) => minutes >= timeMinutes(lesson.start) && minutes < timeMinutes(lesson.end),
+  );
+  const next = actual.find((lesson) => timeMinutes(lesson.start) > minutes);
+  const lead = current
+    ? `Do końca zajęć: ${remainingTimeText(timeMinutes(current.end) - minutes)}`
+    : next
+      ? `Do następnych zajęć: ${remainingTimeText(timeMinutes(next.start) - minutes)}`
+      : "";
+  return [lead, `Do końca dnia zajęciowego: ${remainingTimeText(lastEnd - minutes)}`]
+    .filter(Boolean)
+    .join(" · ");
+}
+function setTimeStatus(element, text) {
+  if (!element) return;
+  element.textContent = text;
+  element.classList.toggle("hidden", !text);
+}
+function updateDesktopTimeStatus(viewed, now = new Date()) {
+  const element = document.getElementById("desktopTimeStatus");
+  if (mode !== "view" || usesMobileLayout()) return setTimeStatus(element, "");
+  const day = now.getDay() - 1;
+  const text =
+    day >= 0 && day < days ? lessonDayTimeStatus(viewed, dayLessons(day, now), now) : "";
+  setTimeStatus(element, text);
 }
 function renderMobileOverview() {
   const root = document.getElementById("mobileOverviewList");
@@ -236,7 +309,8 @@ function renderMobileOverview() {
   navButtons[0].setAttribute("aria-label", todayView ? "Poprzedni dzień" : "Poprzedni tydzień");
   navButtons[1].setAttribute("aria-label", todayView ? "Następny dzień" : "Następny tydzień");
   const label = document.getElementById("mobileOverviewDate"),
-    note = document.getElementById("mobileOverviewNote");
+    note = document.getElementById("mobileOverviewNote"),
+    timeStatus = document.getElementById("mobileTimeStatus");
   const parity = weekMode
     ? ` · tydzień ${parityForDate(date) === "even" ? "parzysty" : "nieparzysty"}`
     : "";
@@ -246,6 +320,7 @@ function renderMobileOverview() {
     note.textContent = weekRelativeText(date) + parity;
     const lessons = dayLessons(weekday, date),
       nowMinutes = today.getHours() * 60 + today.getMinutes();
+    setTimeStatus(timeStatus, lessonDayTimeStatus(date, lessons, today));
     const sameDay = localDateString(date) === todayKey;
     const nextIndex = sameDay
       ? lessons.findIndex((item) => timeMinutes(item.start) > nowMinutes && !item.otherDate)
@@ -275,6 +350,14 @@ function renderMobileOverview() {
   }
   const monday = mondayFor(date),
     weekKey = localDateString(monday);
+  const realWeek = mondayFor(today);
+  const todayDay = today.getDay() - 1;
+  setTimeStatus(
+    timeStatus,
+    monday.getTime() === realWeek.getTime() && todayDay >= 0 && todayDay < days
+      ? lessonDayTimeStatus(today, dayLessons(todayDay, today), today)
+      : "",
+  );
   label.textContent = `${polishDate(monday)} – ${polishDate(addDays(monday, 6))}`;
   note.textContent =
     (weekMode
@@ -308,7 +391,7 @@ function renderMobileOverview() {
         day: "numeric",
         month: "short",
       }).format(item.date);
-    const count = item.entries.length;
+    const count = item.entries.filter((entry) => !entry.isBreak).length;
     meta.textContent = count
       ? `${count} ${count === 1 ? "wpis" : count < 5 ? "wpisy" : "wpisów"} · ${item.entries[0].start}–${item.entries.at(-1).end}`
       : "Wolne";
@@ -339,6 +422,18 @@ function renderMobileOverview() {
     });
     root.appendChild(section);
   }
+}
+const MOBILE_BREAK_NOTICE_KEY = "planZajecMobileBreakNoticeV13";
+function maybeShowMobileBreakNotice() {
+  if (!usesMobileLayout() || window.innerWidth > 720) return;
+  try {
+    if (localStorage.getItem(MOBILE_BREAK_NOTICE_KEY)) return;
+    localStorage.setItem(MOBILE_BREAK_NOTICE_KEY, "1");
+  } catch (error) {}
+  showModal(
+    "Podgląd mobilny pokazuje przerwy pomiędzy zajęciami. Możesz je ukryć w Ustawieniach, wyłączając opcję „Pokazuj przerwy w podglądzie mobilnym”.",
+    true,
+  );
 }
 let mobileDay = Math.max(0, Math.min(4, new Date().getDay() - 1)),
   mobileTimer;
@@ -391,7 +486,8 @@ function renderMobileEntries() {
       const place = cell
         .querySelector(".entry-block .entry-remote,.entry-block .entry-room")
         ?.textContent.trim();
-      const detail = [teacher, place].filter(Boolean).join(" · ");
+      const group = cell.querySelector(".entry-block .entry-group")?.textContent.trim();
+      const detail = [group, teacher, place].filter(Boolean).join(" · ");
       if (detail) {
         const small = document.createElement("small");
         small.textContent = detail;
@@ -419,7 +515,10 @@ function renderMobileEntries() {
 function registerOfflineShell() {
   if (!("serviceWorker" in navigator) || !/^https?:$/.test(location.protocol)) return;
   navigator.serviceWorker
-    .register(new URL("./service-worker.js", location.href), { scope: "./" })
+    .register(new URL("./service-worker.js", location.href), {
+      scope: "./",
+      updateViaCache: "none",
+    })
     .catch(() => {});
 }
 
@@ -430,7 +529,10 @@ window.addEventListener("DOMContentLoaded", () => {
   initSettings();
   loadState();
   document.getElementById("entrySubject").addEventListener("input", updateSubjectColorFields);
-  document.getElementById("entryType").addEventListener("input", updateSubjectColorFields);
+  document.getElementById("entryType").addEventListener("input", () => {
+    updateSubjectColorFields();
+    updateEntryGroupField();
+  });
   setMode(settings.defaultMode === "edit" ? "edit" : hasPlanData() ? "view" : "edit");
   const profile = readProfile();
   if (!profile?.done) {
