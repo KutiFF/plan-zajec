@@ -404,8 +404,10 @@ function refreshTemporalView() {
     ? "Plan tygodniowy"
     : `Tydzień ${currentWeek === "even" ? "parzysty" : "nieparzysty"} · ${parityUsesReference() ? "według daty odniesienia" : "według numeru tygodnia w kalendarzu"}`;
   updateWeekNavigator(now);
-  updateDesktopTimeStatus(now, realNow);
-  scheduleMobileOverview();
+  // PL: Podczas aktualizacji Service Workera starszy podgląd nie może zatrzymać startu aplikacji.
+  // EN: During a Service Worker update, an older preview must not stop app startup.
+  if (typeof updateDesktopTimeStatus === "function") updateDesktopTimeStatus(now, realNow);
+  if (typeof scheduleMobileOverview === "function") scheduleMobileOverview();
 }
 function openHelp() {
   document.getElementById("helpModal").classList.replace("hidden", "flex");

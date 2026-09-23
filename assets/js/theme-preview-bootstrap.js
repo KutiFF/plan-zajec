@@ -71,8 +71,7 @@ let mobileA4ReturnMode = "edit",
 function openMobileDocumentPreview() {
   mobileA4ReturnMode = mode;
   mobileA4ReturnWeek = mode === "edit" ? currentWeek : null;
-  document.getElementById("optionsDropdown").classList.add("hidden");
-  document.querySelector(".export-button").setAttribute("aria-expanded", "false");
+  closeOptionsDropdown();
   if (mode !== "view") setMode("view");
   toggleMobilePreview(true);
 }
@@ -516,7 +515,10 @@ function renderMobileEntries() {
 function registerOfflineShell() {
   if (!("serviceWorker" in navigator) || !/^https?:$/.test(location.protocol)) return;
   navigator.serviceWorker
-    .register(new URL("./service-worker.js", location.href), { scope: "./" })
+    .register(new URL("./service-worker.js", location.href), {
+      scope: "./",
+      updateViaCache: "none",
+    })
     .catch(() => {});
 }
 

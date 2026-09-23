@@ -6,7 +6,7 @@
     <title>Twój plan zajęć</title>
     <link rel="icon" type="image/png" href="app-icon.png" />
     <link rel="apple-touch-icon" href="app-icon.png" />
-    <link rel="stylesheet" href="assets/css/app.css" />
+    <link rel="stylesheet" href="assets/css/app.css?app-shell" />
   </head>
   <body>
     <header class="app-header no-print">
@@ -111,7 +111,11 @@
             </button>
             <button id="modeButton" onclick="toggleMode()" class="ui-button">Podgląd</button>
             <div class="relative">
-              <button onclick="toggleOptionsDropdown(this)" class="ui-button export-button">
+              <button
+                onclick="toggleOptionsDropdown(this)"
+                class="ui-button export-button export-menu-trigger"
+                aria-expanded="false"
+              >
                 Eksport ▾
               </button>
               <div id="optionsDropdown" class="hidden absolute">
@@ -989,6 +993,17 @@
       >
         <span aria-hidden="true"></span>Podgląd
       </button>
+      <button
+        type="button"
+        id="mobileExportTab"
+        class="export-menu-trigger"
+        onclick="toggleOptionsDropdown(this)"
+        aria-label="Otwórz eksport"
+        aria-expanded="false"
+        aria-controls="optionsDropdown"
+      >
+        <span aria-hidden="true"></span>Eksport
+      </button>
     </nav>
 
     <div id="saveStatus" class="no-print" role="status" aria-live="polite"></div>
@@ -1777,11 +1792,11 @@
         </div>
       </div>
     </div>
-    <script src="assets/js/version.js"></script>
-    <script src="assets/js/editor.js"></script>
-    <script src="assets/js/state-and-export.js"></script>
-    <script src="assets/js/text-formatting.js"></script>
-    <script src="assets/js/schedule-and-settings.js"></script>
-    <script src="assets/js/theme-preview-bootstrap.js"></script>
+    <script src="assets/js/version.js?app-shell"></script>
+    <script src="assets/js/editor.js?app-shell"></script>
+    <script src="assets/js/state-and-export.js?app-shell"></script>
+    <script src="assets/js/text-formatting.js?app-shell"></script>
+    <script src="assets/js/schedule-and-settings.js?app-shell"></script>
+    <script src="assets/js/theme-preview-bootstrap.js?app-shell"></script>
   </body>
 </html>

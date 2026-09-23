@@ -29,6 +29,7 @@ function placeAppActions() {
   exportWrap.querySelector(".export-button").setAttribute("aria-expanded", "false");
   document.getElementById("mobileEditTab").querySelector("span").innerHTML = APP_ICONS.edit;
   document.getElementById("mobileViewTab").querySelector("span").innerHTML = APP_ICONS.view;
+  document.getElementById("mobileExportTab").querySelector("span").innerHTML = APP_ICONS.export;
   document.querySelector(".preview-feedback > span").innerHTML = APP_ICONS.help;
 }
 function isTabletViewport() {
@@ -42,13 +43,9 @@ function syncResponsiveClass() {
   document.documentElement.classList.toggle("mobile-layout", mobile);
   if (!mobile) document.getElementById("settingsBackdrop").classList.add("hidden");
   const exportWrap = document.querySelector("#optionsDropdown")?.parentElement;
-  const host =
-    mobile && !document.body.classList.contains("mobile-previewing")
-      ? document.getElementById(mode === "view" ? "mobileViewExport" : "mobileEditExport")
-      : document.getElementById("documentActions");
+  const host = mobile ? document.body : document.getElementById("documentActions");
   if (exportWrap && host && exportWrap.parentElement !== host) {
-    document.getElementById("optionsDropdown").classList.add("hidden");
-    exportWrap.querySelector(".export-button").setAttribute("aria-expanded", "false");
+    closeOptionsDropdown();
     host.appendChild(exportWrap);
   }
   scheduleMobileEntries();
@@ -185,11 +182,18 @@ function setupCellControls() {
   });
 }
 
+function closeOptionsDropdown() {
+  const dropdown = document.getElementById("optionsDropdown");
+  dropdown.classList.add("hidden");
+  document
+    .querySelectorAll(".export-menu-trigger")
+    .forEach((button) => button.setAttribute("aria-expanded", "false"));
+}
+
 function toggleOptionsDropdown(btn) {
   const dropdown = document.getElementById("optionsDropdown");
   if (!dropdown.classList.contains("hidden")) {
-    dropdown.classList.add("hidden");
-    btn.setAttribute("aria-expanded", "false");
+    closeOptionsDropdown();
     return;
   }
   const rect = btn.getBoundingClientRect();
@@ -198,7 +202,9 @@ function toggleOptionsDropdown(btn) {
   const menuHeight = dropdown.getBoundingClientRect().height;
   dropdown.style.left = `${Math.max(8, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8))}px`;
   dropdown.style.top = `${rect.bottom + 6 + menuHeight > window.innerHeight ? Math.max(8, rect.top - menuHeight - 6) : rect.bottom + 6}px`;
-  btn.setAttribute("aria-expanded", "true");
+  document
+    .querySelectorAll(".export-menu-trigger")
+    .forEach((button) => button.setAttribute("aria-expanded", String(button === btn)));
 }
 
 tbody.addEventListener("click", (e) => {
@@ -353,12 +359,11 @@ document.addEventListener("click", (e) => {
   }
   if (
     !e.target.closest("#optionsDropdown") &&
-    !e.target.closest('button[onclick*="toggleOptionsDropdown"]')
+    !e.target.closest(".export-menu-trigger")
   ) {
     const dropdown = document.getElementById("optionsDropdown");
     if (dropdown && !dropdown.classList.contains("hidden")) {
-      dropdown.classList.add("hidden");
-      document.querySelector(".export-button").setAttribute("aria-expanded", "false");
+      closeOptionsDropdown();
     }
   }
   if (!e.target.closest(".color-dropdown-container")) {

@@ -450,8 +450,7 @@ document.addEventListener("keydown", function (e) {
     }
     closeAllCellMenus();
     closeSettings(false);
-    document.getElementById("optionsDropdown").classList.add("hidden");
-    document.querySelector(".export-button").setAttribute("aria-expanded", "false");
+    closeOptionsDropdown();
     return;
   }
   if (e.key === "F1") {
@@ -586,8 +585,7 @@ function openBackupExport() {
     "Aktualnie otwarty — " + currentLabel;
   document.getElementById("backupScope").value = "current";
   document.getElementById("backupIncludeSettings").checked = true;
-  document.getElementById("optionsDropdown").classList.add("hidden");
-  document.querySelector(".export-button").setAttribute("aria-expanded", "false");
+  closeOptionsDropdown();
   document.getElementById("backupModal").classList.replace("hidden", "flex");
   document.getElementById("backupScope").focus();
 }
@@ -751,7 +749,7 @@ function importJSON(event) {
   };
   reader.readAsText(file);
   event.target.value = "";
-  document.getElementById("optionsDropdown").classList.add("hidden");
+  closeOptionsDropdown();
 }
 let pdfExportState = null;
 function openPrintOptions() {
@@ -759,8 +757,7 @@ function openPrintOptions() {
     openMobileDocumentPreview();
     return;
   }
-  document.getElementById("optionsDropdown").classList.add("hidden");
-  document.querySelector(".export-button").setAttribute("aria-expanded", "false");
+  closeOptionsDropdown();
   document.getElementById("printAllModules").checked = true;
   document.getElementById("printWeekScope").value = "current";
   document.getElementById("printWeekScopeWrap").classList.toggle("hidden", !weekMode);

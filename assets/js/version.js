@@ -5,7 +5,7 @@
  * Zmieniaj tylko wartość poniżej / Change only the value below.
  */
 (() => {
-  const version = "1.4.0";
+  const version = "1.4.1";
 
   if (!/^\d+\.\d+\.\d+$/.test(version)) {
     throw new Error("APP_VERSION musi mieć format MAJOR.MINOR.PATCH");

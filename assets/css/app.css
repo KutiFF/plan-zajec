@@ -3921,6 +3921,9 @@ html.mobile-layout .mobile-export-host .export-button {
   color: var(--ui-on-primary);
   border-color: transparent;
 }
+html.mobile-layout .export-button {
+  display: none;
+}
 html.mobile-layout body:not(.mobile-previewing) #optionsDropdown .mobile-export-preview {
   display: block;
 }
