@@ -632,6 +632,10 @@ function escapeHtmlEntry(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+function capitalizeLessonType(value) {
+  const text = String(value || "").trim();
+  return text ? text.charAt(0).toLocaleUpperCase("pl-PL") + text.slice(1) : "";
+}
 function selectedSubjectStyle(type, palette) {
   if (palette !== "auto") return palette;
   if (/lektorat/i.test(type)) return "red";
@@ -640,7 +644,7 @@ function selectedSubjectStyle(type, palette) {
 }
 async function submitEntryModal() {
   const subject = document.getElementById("entrySubject").value.trim();
-  const type = document.getElementById("entryType").value.trim();
+  const type = capitalizeLessonType(document.getElementById("entryType").value);
   const teacherName = document.getElementById("entryTeacher").value.trim();
   const teacherPrefix = document.getElementById("entryTeacherPrefix").value;
   const teacher = formatTeacher(teacherPrefix, teacherName);

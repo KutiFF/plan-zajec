@@ -118,6 +118,9 @@ function loadStateStr(stateStr, restoreAreaModules = false) {
     const state = JSON.parse(stateStr);
     if (restoreAreaModules && state.omu) omuState = normalizeOmu(state.omu);
     if (state.table) tbody.innerHTML = state.table;
+    tbody.querySelectorAll(".entry-meta").forEach((element) => {
+      element.textContent = capitalizeLessonType(element.textContent);
+    });
     tbody
       .querySelectorAll("[contenteditable]")
       .forEach((el) => el.removeAttribute("contenteditable"));

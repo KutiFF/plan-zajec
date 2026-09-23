@@ -148,7 +148,7 @@ function cellLessonsForDay(day) {
           start,
           end,
           subject: block.querySelector(".entry-subject")?.textContent.trim() || "",
-          type: block.querySelector(".entry-meta")?.textContent.trim() || "",
+          type: capitalizeLessonType(block.querySelector(".entry-meta")?.textContent),
           teacher: block.querySelector(".entry-teacher")?.textContent.trim() || "",
           room: block.querySelector(".entry-room,.entry-room-alt")?.textContent.trim() || "",
           remote: block.dataset.remote === "1" || !!block.querySelector(".entry-remote"),
