@@ -120,7 +120,7 @@
               </button>
               <div id="optionsDropdown" class="hidden absolute">
                 <button onclick="openMobileDocumentPreview()" class="mobile-export-preview">
-                  Podgląd A4 i zapis PDF
+                  Podgląd dokumentu A4
                 </button>
                 <button onclick="openPrintOptions()" class="pdf-export-action">
                   Drukuj / zapisz PDF
@@ -196,7 +196,7 @@
                 </div>
                 <label class="setting-check"
                   ><input type="checkbox" id="setOmuEnabled" onchange="toggleOmu(this.checked)" />
-                  Włącz moduły obszarowe</label
+                  Pokaż dodatkowe moduły</label
                 >
                 <label class="setting-check"
                   ><input
@@ -216,7 +216,7 @@
                   />
                   Pokazuj przerwy w podglądzie mobilnym</label
                 >
-                <button class="ui-button full-width" onclick="openOmu()">Ustaw moduły obszarowe</button>
+                <button class="ui-button full-width" onclick="openOmu()">Ustaw dodatkowe moduły</button>
                 <hr />
                 <label
                   >Tryb po otwarciu<select
@@ -323,8 +323,10 @@
         </div>
         <div class="toolbar-row edit-only module-toolbar">
           <div>
-            <strong>Moduły obszarowe</strong>
-            <small>Dodawaj i edytuj terminy wspólne dla obu wariantów tygodnia.</small>
+            <strong>Dodatkowe moduły</strong>
+            <small>
+              Dodawaj moduły kształcenia obszarowego oraz OMU we wspólnym panelu.
+            </small>
           </div>
           <button class="ui-button" onclick="openOmu()">Zarządzaj modułami</button>
         </div>
@@ -792,7 +794,16 @@
             id="documentActions"
             class="document-actions"
             aria-label="Widok i akcje dokumentu"
-          ></div>
+          >
+            <button
+              id="documentPrintButton"
+              type="button"
+              class="ui-button document-print-button"
+              onclick="openPrintOptions()"
+            >
+              Drukuj / zapisz PDF
+            </button>
+          </div>
           <div class="zoom-control">
             <button
               type="button"
@@ -1424,11 +1435,13 @@
           </p>
         </details>
         <details>
-          <summary>Jak dodać i sprawdzić moduły obszarowe?</summary>
+          <summary>Jak dodać i sprawdzić dodatkowe moduły?</summary>
           <p class="setting-note">
-            Otwórz Moduły obszarowe, wybierz blok, dzień i godziny, a następnie ustaw konkretne daty,
-            cotygodniowy zakres albo liczbę spotkań. Wpis jest wspólny dla tygodni parzystych i
-            nieparzystych, a w podglądzie pokazuje się tylko wtedy, gdy przypada na oglądany tydzień.
+            Otwórz Dodatkowe moduły i wybierz rodzaj wpisu: moduł kształcenia obszarowego albo OMU
+            (Otwarty Moduł Uniwersytecki). Dla modułu obszarowego wybierzesz także blok. Następnie
+            ustaw dzień, godziny oraz konkretne daty, cotygodniowy zakres albo liczbę spotkań.
+            Wpis jest wspólny dla tygodni parzystych i nieparzystych, a w podglądzie pokazuje się
+            tylko wtedy, gdy przypada na oglądany tydzień.
           </p>
         </details>
         <details>
@@ -1546,8 +1559,8 @@
           Przed otwarciem systemowego okna wydruku wybierz zawartość dokumentu.
         </p>
         <label class="setting-check"
-          ><input id="printAllModules" type="checkbox" checked /> Pokaż wszystkie moduły
-          obszarowe</label
+          ><input id="printAllModules" type="checkbox" checked /> Pokaż wszystkie dodatkowe
+          moduły</label
         >
         <div class="setting-note">
           Domyślnie PDF zawiera pełną listę modułów, również z innych tygodni.
@@ -1611,15 +1624,16 @@
       aria-labelledby="omuTitle"
     >
       <div class="dialog-panel">
-        <h2 id="omuTitle" class="text-lg font-bold">Moduły kształcenia obszarowego</h2>
+        <h2 id="omuTitle" class="text-lg font-bold">Dodatkowe moduły</h2>
         <p class="setting-note" id="omuBankLabel"></p>
         <label class="inline-check"
-          ><input type="checkbox" id="omuEnabled" onchange="toggleOmu(this.checked)" /> Włącz moduły
-          obszarowe</label
+          ><input type="checkbox" id="omuEnabled" onchange="toggleOmu(this.checked)" /> Pokaż
+          dodatkowe moduły na planie</label
         >
         <p class="setting-note">
-          Wpisy są wspólne dla tygodnia parzystego i nieparzystego. Wybierz pojedyncze daty,
-          cotygodniowy zakres albo liczbę spotkań.
+          Tutaj dodasz moduły kształcenia obszarowego oraz OMU — Otwarte Moduły Uniwersyteckie.
+          Rodzaj wybierasz dla każdego wpisu. Wpisy są wspólne dla tygodnia parzystego i
+          nieparzystego.
         </p>
         <div id="omuList"></div>
         <form
@@ -1630,7 +1644,14 @@
           "
         >
           <div class="form-grid">
-            <label
+            <label class="span-two"
+              >Rodzaj wpisu<select id="omuType" onchange="updateOmuTypeFields()">
+                <option value="area">Moduł kształcenia obszarowego</option>
+                <option value="omu">OMU — Otwarty Moduł Uniwersytecki</option>
+              </select></label
+            >
+            <p id="omuTypeHelp" class="span-two setting-note"></p>
+            <label id="omuBlockField"
               >Blok<select id="omuBlock" onchange="setOmuBlockDefaults()">
                 <option value="1">Blok 1</option>
                 <option value="2">Blok 2</option>
@@ -1753,7 +1774,7 @@
             >
               Usuń wpis</button
             ><button type="button" class="ui-button" onclick="closeOmu()">Zamknij</button
-            ><button type="submit" class="ui-button primary-button">Zapisz moduł</button>
+            ><button type="submit" class="ui-button primary-button">Zapisz wpis</button>
           </div>
         </form>
       </div>
