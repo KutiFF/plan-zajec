@@ -460,6 +460,19 @@ function validWeeklyRange(start, end, day) {
     weekNumberSince(start, dateFromInput(end)) !== null
   );
 }
+
+// PL: Oba rodzaje wpisów korzystają z tego samego terminarza, ale mają osobne
+// etykiety, żeby użytkownik wiedział, co dodaje.
+// EN: Both entry types share one scheduler, but have separate labels so users
+// can clearly identify what they are adding.
+function extraModuleTypeLabel(type) {
+  return type === "omu"
+    ? "OMU — Otwarty Moduł Uniwersytecki"
+    : "Moduł kształcenia obszarowego";
+}
+function extraModuleShortLabel(entry) {
+  return entry?.type === "omu" ? "OMU" : "Moduł obszarowy";
+}
 function normalizeOmu(raw) {
   const result = { enabled: !!raw?.enabled, entries: [] };
   if (!Array.isArray(raw?.entries)) return result;
@@ -506,6 +519,9 @@ function normalizeOmu(raw) {
       continue;
     result.entries.push({
       id: typeof entry.id === "string" ? entry.id.slice(0, 80) : "omu-" + result.entries.length,
+      // PL: Starsze plany nie miały rodzaju wpisu; zachowujemy je jako moduły obszarowe.
+      // EN: Older plans did not store the entry type; keep them as area modules.
+      type: entry.type === "omu" ? "omu" : "area",
       block: entry.block === "2" ? "2" : "1",
       day,
       start,
@@ -588,7 +604,7 @@ function openOmu(id = null) {
   if (mode === "view") setMode("edit");
   document.getElementById("settingsPanel").classList.add("hidden");
   document.getElementById("omuBankLabel").textContent =
-    "Wspólne dla tygodni parzystych i nieparzystych";
+    "Terminy są wspólne dla tygodni parzystych i nieparzystych.";
   document.getElementById("omuEnabled").checked = omuState.enabled;
   refreshEntrySuggestions();
   renderOmuList();
@@ -606,7 +622,11 @@ function renderOmuList() {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "ui-button omu-list-item";
-    button.textContent = "Blok " + entry.block + " · " + entry.subject;
+    button.textContent =
+      extraModuleShortLabel(entry) +
+      (entry.type === "omu" ? "" : " · blok " + entry.block) +
+      " · " +
+      entry.subject;
     button.setAttribute("aria-pressed", String(entry.id === editingOmuId));
     button.onclick = () => selectOmuEntry(entry.id);
     list.appendChild(button);
@@ -622,6 +642,7 @@ function selectOmuEntry(id) {
   const entry = omuState.entries.find((e) => e.id === id);
   editingOmuId = entry?.id || null;
   const nextBlock = omuState.entries.some((e) => e.block === "1") ? "2" : "1";
+  document.getElementById("omuType").value = entry?.type === "omu" ? "omu" : "area";
   document.getElementById("omuBlock").value = entry?.block || nextBlock;
   document.getElementById("omuDay").value = String(entry?.day ?? 0);
   document.getElementById("omuStart").value =
@@ -645,15 +666,25 @@ function selectOmuEntry(id) {
   document.getElementById("omuDelete").classList.toggle("hidden", !entry);
   draftOmuDates = [...(entry?.dates || [])];
   document.getElementById("omuDateInput").value = "";
+  updateOmuTypeFields();
   updateOmuDateFields();
   updateOmuPlaceFields();
   renderOmuDates();
   renderOmuList();
 }
 function setOmuBlockDefaults() {
+  if (document.getElementById("omuType").value === "omu") return;
   const first = document.getElementById("omuBlock").value === "1";
   document.getElementById("omuStart").value = first ? "13:45" : "16:15";
   document.getElementById("omuEnd").value = first ? "16:00" : "18:30";
+}
+function updateOmuTypeFields() {
+  const type = document.getElementById("omuType").value;
+  const isOmu = type === "omu";
+  document.getElementById("omuBlockField").classList.toggle("hidden", isOmu);
+  document.getElementById("omuTypeHelp").textContent = isOmu
+    ? "OMU nie korzysta z bloków 1 i 2. Ustaw jego rzeczywisty dzień oraz godzinę."
+    : "Moduł obszarowy możesz przypisać do bloku 1 lub 2. Zmiana bloku podpowiada standardowe godziny.";
 }
 function updateOmuDateFields() {
   const repeat = document.getElementById("omuRepeat").value;
@@ -726,6 +757,7 @@ async function saveOmuEntry() {
       "omu-" +
         (globalThis.crypto?.randomUUID?.() ||
           Date.now() + "-" + Math.random().toString(36).slice(2)),
+    type: value("omuType") === "omu" ? "omu" : "area",
     block: value("omuBlock"),
     day: Number(value("omuDay")),
     start: value("omuStart"),
@@ -786,10 +818,10 @@ async function saveOmuEntry() {
   saveState(true);
   renderOmuList();
   closeOmu();
-  announce("Zapisano moduł obszarowy.");
+  announce("Zapisano: " + extraModuleTypeLabel(normalized.type) + ".");
 }
 async function deleteOmuEntry() {
-  if (!editingOmuId || !(await showModal("Usunąć wybrany moduł?"))) return;
+  if (!editingOmuId || !(await showModal("Usunąć wybrany dodatkowy moduł?"))) return;
   omuState.entries = omuState.entries.filter((e) => e.id !== editingOmuId);
   editingOmuId = null;
   saveState(true);
@@ -806,7 +838,7 @@ function renderOmu() {
   if (!omuState.enabled) return;
   const title = document.createElement("h2");
   title.className = "omu-section-title";
-  title.textContent = "Moduły kształcenia obszarowego · godziny indywidualne";
+  title.textContent = "Dodatkowe moduły · godziny indywidualne";
   section.appendChild(title);
   const entries = visibleOmuEntries(displayedDate).sort(
     (a, b) => a.start.localeCompare(b.start) || a.day - b.day || a.block.localeCompare(b.block),
@@ -816,8 +848,8 @@ function renderOmu() {
     empty.className = "omu-empty";
     empty.textContent =
       mode === "edit"
-        ? "Dodaj moduł przyciskiem „Moduły obszarowe”. Udział w dwóch blokach nie jest wymagany."
-        : "Brak spotkań modułów obszarowych w tym tygodniu.";
+        ? "Dodaj moduł przyciskiem „Dodatkowe moduły”. Wybierzesz tam moduł obszarowy albo OMU."
+        : "Brak spotkań dodatkowych modułów w tym tygodniu.";
     section.appendChild(empty);
     return;
   }
@@ -845,7 +877,10 @@ function renderOmu() {
         if (mode === "edit") {
           card.tabIndex = 0;
           card.setAttribute("role", "button");
-          card.setAttribute("aria-label", "Edytuj moduł obszarowy: " + entry.subject);
+          card.setAttribute(
+            "aria-label",
+            "Edytuj " + extraModuleShortLabel(entry) + ": " + entry.subject,
+          );
           card.onclick = () => openOmu(entry.id);
           card.onkeydown = (e) => {
             if (e.key === "Enter") {
@@ -861,7 +896,16 @@ function renderOmu() {
           el.textContent = text;
           card.appendChild(el);
         };
-        line("omu-day-name", dayNames[day] + " · blok " + entry.block);
+        line(
+          "omu-day-name",
+          [
+            extraModuleShortLabel(entry),
+            dayNames[day],
+            entry.type === "omu" ? "" : "blok " + entry.block,
+          ]
+            .filter(Boolean)
+            .join(" · "),
+        );
         line("entry-subject", entry.subject);
         line(
           "entry-meta",

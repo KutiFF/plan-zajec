@@ -2422,8 +2422,17 @@ body {
   color: var(--ui-on-primary);
   font-weight: 750;
 }
+.document-actions .document-print-button {
+  background: var(--ui-primary);
+  color: var(--ui-on-primary);
+  border-color: var(--ui-primary);
+  font-weight: 750;
+}
 .document-actions .export-button:hover {
   background: var(--ui-primary);
+  filter: brightness(1.1);
+}
+.document-actions .document-print-button:hover {
   filter: brightness(1.1);
 }
 .zoom-control {
@@ -2963,7 +2972,8 @@ body {
   .document-actions #modeButton {
     display: none;
   }
-  .document-actions .export-button {
+  .document-actions .export-button,
+  .document-actions .document-print-button {
     min-height: 44px;
   }
   .zoom-control {
